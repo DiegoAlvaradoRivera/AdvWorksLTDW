@@ -146,7 +146,7 @@ After the changes have been extracted, these are applied to the presentation.Pro
 This process is performed by the ProductHistoryIncrLoad ADF pipeline.
 Finally, the product dimension is created as a view on top of the presentation.ProductHistory table.
 
-![](img/ProductHistoryIncrLoad.png "Product history incremental load")
+![](img/ProductHistoryIncrLoadPipeline.png "Product history incremental load")
 
 
 ### Sales Orders Incremental Load
@@ -155,7 +155,7 @@ The Sales Orders Fact table is loaded with orders that have been shipped.
 To perform the incremental extraction, the orders marked as shipped in the operational database are compared with the orders loaded into the DW to detect to shipped orders that have not been loaded. 
 After this, the data is extracted, transformed and loaded into the DW. The incremental load process is implemented in the SalesOrdersIncrLoad ADF pipeline.
 
-![](img/SalesOrdersIncrLoad.png "Sales orders incremental load")
+![](img/SalesOrdersIncrLoadPipeline.png "Sales orders incremental load")
 
 
 ## Repository Description

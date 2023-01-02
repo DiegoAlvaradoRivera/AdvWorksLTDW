@@ -9,7 +9,7 @@ In the following project a DW for the AdventureWorksLT database is designed and 
 
 The AdventureWorksLT database is an SQL Server sample database. It contains data about customers, products, and sales orders. The following image shows the schema of the database.
 
-![](img/AdvWorksLTSchema.png "Adventure Works LT Schema")
+![](img/AdvWorksLTSchema.PNG "Adventure Works LT Schema")
 
 ## Dimensional Model for the Sales Order Business Process
 

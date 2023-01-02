@@ -133,7 +133,7 @@ After the changes have been extracted, these are applied to the presentation.Cus
 This process is performed by the CustomerHistoryIncrLoad ADF pipeline.
 Finally, the customer dimension is created as a view on top of the presentation.CustomerHistory table.
 
-![](img/CustomerHistoryIncrLoad.png "Customer history incremental load")
+![](img/CustomerHistoryIncrLoadPipeline.png "Customer history incremental load")
 
 
 ### Product Incremental Load

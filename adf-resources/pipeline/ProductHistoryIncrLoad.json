@@ -224,14 +224,14 @@
 						},
 						"sync_ct_version": {
 							"value": {
-								"value": "@if(\n    equals(\n        activity('Extract CT File').output.rowsRead, \n        0\n    ), \n    activity('Pre CT Lookup').output.firstRow.ct_version, \n    activity('Post CT Lookup').output.firstRow.current_ct_version\n)",
+								"value": "@if(\n    equals(\n        activity('Extract Product CT File').output.rowsRead, \n        0\n    ), \n    activity('Pre CT Lookup').output.firstRow.ct_version, \n    activity('Post CT Lookup').output.firstRow.current_ct_version\n)",
 								"type": "Expression"
 							},
 							"type": "Int32"
 						},
 						"sync_timestamp": {
 							"value": {
-								"value": "@if(\n    equals(\n        activity('Extract CT File').output.rowsRead, \n        0\n    ), \n    activity('Pre CT Lookup').output.firstRow.extraction_time, \n    activity('Post CT Lookup').output.firstRow.extraction_time\n)",
+								"value": "@if(\n    equals(\n        activity('Extract Product CT File').output.rowsRead, \n        0\n    ), \n    activity('Pre CT Lookup').output.firstRow.extraction_time, \n    activity('Post CT Lookup').output.firstRow.extraction_time\n)",
 								"type": "Expression"
 							},
 							"type": "DateTime"

@@ -173,3 +173,5 @@ The contents of the repository are described in this section:
   - set the powershell command to use: **python -m powershell_kernel.install --powershell-command [command]**
   - launch jupyter notebook: **jupyter notebook**
   - open the notebook and select the Powershell kernel
+
+The main.ipynb notebook contains the results of a previuos execution.

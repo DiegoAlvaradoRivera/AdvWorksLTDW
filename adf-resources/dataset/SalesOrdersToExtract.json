@@ -1,0 +1,19 @@
+{
+	"name": "SalesOrdersToExtract",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AdvWorksLT_SQLDB_LS",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "Integration"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": "integration",
+			"table": "SalesOrdersToExtract"
+		}
+	}
+}

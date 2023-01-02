@@ -1,0 +1,3 @@
+type,name,path,value
+linkedService,ThisRG_KV_LS,typeProperties.baseUrl,"$keyVaultURL"
+linkedService,AdvWorksLT_ADLS_LS,typeProperties.url,"$adlsURL"

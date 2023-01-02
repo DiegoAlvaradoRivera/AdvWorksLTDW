@@ -1,0 +1,213 @@
+{
+	"name": "DF_CustomerHistoryIncrLoad",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "CustomerCTFile",
+						"type": "DatasetReference"
+					},
+					"name": "CTFile"
+				},
+				{
+					"dataset": {
+						"referenceName": "AdvWorksLTQuery",
+						"type": "DatasetReference"
+					},
+					"name": "CustomersHistoryCurrentRows"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "CustomersHistoryTable",
+						"type": "DatasetReference"
+					},
+					"name": "ApplyCT"
+				}
+			],
+			"transformations": [
+				{
+					"name": "split1"
+				},
+				{
+					"name": "CTInsertsAndUpdates"
+				},
+				{
+					"name": "IUwithRowMetadata"
+				},
+				{
+					"name": "RowsToInserts"
+				},
+				{
+					"name": "ModifiedRows"
+				},
+				{
+					"name": "CTUpdatesAndDeletes"
+				},
+				{
+					"name": "SelectColumns"
+				},
+				{
+					"name": "SetRowCurrentFlag"
+				},
+				{
+					"name": "UpdatesAndInserts"
+				},
+				{
+					"name": "SetAction"
+				},
+				{
+					"name": "InsertsWithEfectiveDate"
+				},
+				{
+					"name": "UpdatesWithEffectiveDate"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          current_ct_version as long,",
+				"          extraction_time as timestamp,",
+				"          ct_key as integer,",
+				"          ct_operation as string,",
+				"          ct_insertion_time as timestamp,",
+				"          ct_last_mod_time as timestamp,",
+				"          CustomerID as integer,",
+				"          NameStyle as boolean,",
+				"          Title as string,",
+				"          FirstName as string,",
+				"          MiddleName as string,",
+				"          LastName as string,",
+				"          Suffix as string,",
+				"          CompanyName as string,",
+				"          SalesPerson as string,",
+				"          EmailAddress as string,",
+				"          Phone as string,",
+				"          MainOfficeAddressLine1 as string,",
+				"          MainOfficeAddressLine2 as string,",
+				"          MainOfficeCity as string,",
+				"          MainOfficeStateProvince as string,",
+				"          MainOfficeCountryRegion as string,",
+				"          MainOfficePostalCode as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'parquet',",
+				"     partitionBy('hash', 4,",
+				"          ct_key",
+				"     )) ~> CTFile",
+				"source(output(",
+				"          SurrogateKey as integer,",
+				"          CustomerID as integer,",
+				"          NameStyle as boolean,",
+				"          Title as string,",
+				"          FirstName as string,",
+				"          MiddleName as string,",
+				"          LastName as string,",
+				"          Suffix as string,",
+				"          CompanyName as string,",
+				"          SalesPerson as string,",
+				"          EmailAddress as string,",
+				"          Phone as string,",
+				"          MainOfficeAddressLine1 as string,",
+				"          MainOfficeAddressLine2 as string,",
+				"          MainOfficeCity as string,",
+				"          MainOfficeStateProvince as string,",
+				"          MainOfficeCountryRegion as string,",
+				"          MainOfficePostalCode as string,",
+				"          RowEffectiveDate as timestamp,",
+				"          RowExpirationDate as timestamp,",
+				"          RowCurrentFlag as boolean",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: 'SELECT *\\nFROM presentation.CustomersHistory\\nWHERE RowCurrentFlag = 1',",
+				"     format: 'query') ~> CustomersHistoryCurrentRows",
+				"CTFile split(equals(ct_operation, 'I'),",
+				"     equals(ct_operation, 'U'),",
+				"     equals(ct_operation, 'D'),",
+				"     disjoint: false) ~> split1@(Inserts, Updates, Deletes)",
+				"InsertsWithEfectiveDate, UpdatesWithEffectiveDate union(byName: true)~> CTInsertsAndUpdates",
+				"CTInsertsAndUpdates derive(RowEffectiveDate = RowEffectiveDate,",
+				"          RowExpirationDate = toTimestamp('9999-12-31 00:00:00'),",
+				"          RowCurrentFlag = 1) ~> IUwithRowMetadata",
+				"IUwithRowMetadata select(mapColumn(",
+				"          CustomerID,",
+				"          NameStyle,",
+				"          Title,",
+				"          FirstName,",
+				"          MiddleName,",
+				"          LastName,",
+				"          Suffix,",
+				"          CompanyName,",
+				"          SalesPerson,",
+				"          EmailAddress,",
+				"          Phone,",
+				"          MainOfficeAddressLine1,",
+				"          MainOfficeAddressLine2,",
+				"          MainOfficeCity,",
+				"          MainOfficeStateProvince,",
+				"          MainOfficeCountryRegion,",
+				"          MainOfficePostalCode,",
+				"          RowEffectiveDate,",
+				"          RowExpirationDate,",
+				"          RowCurrentFlag",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> RowsToInserts",
+				"CustomersHistoryCurrentRows, CTUpdatesAndDeletes join(CustomersHistoryCurrentRows@CustomerID == ct_key,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> ModifiedRows",
+				"split1@Deletes, split1@Updates union(byName: true)~> CTUpdatesAndDeletes",
+				"ModifiedRows select(mapColumn(",
+				"          SurrogateKey,",
+				"          CustomerID = CustomersHistoryCurrentRows@CustomerID,",
+				"          NameStyle = CustomersHistoryCurrentRows@NameStyle,",
+				"          Title = CustomersHistoryCurrentRows@Title,",
+				"          FirstName = CustomersHistoryCurrentRows@FirstName,",
+				"          MiddleName = CustomersHistoryCurrentRows@MiddleName,",
+				"          LastName = CustomersHistoryCurrentRows@LastName,",
+				"          Suffix = CustomersHistoryCurrentRows@Suffix,",
+				"          CompanyName = CustomersHistoryCurrentRows@CompanyName,",
+				"          SalesPerson = CustomersHistoryCurrentRows@SalesPerson,",
+				"          EmailAddress = CustomersHistoryCurrentRows@EmailAddress,",
+				"          Phone = CustomersHistoryCurrentRows@Phone,",
+				"          MainOfficeAddressLine1 = CustomersHistoryCurrentRows@MainOfficeAddressLine1,",
+				"          MainOfficeAddressLine2 = CustomersHistoryCurrentRows@MainOfficeAddressLine2,",
+				"          MainOfficeCity = CustomersHistoryCurrentRows@MainOfficeCity,",
+				"          MainOfficeStateProvince = CustomersHistoryCurrentRows@MainOfficeStateProvince,",
+				"          MainOfficeCountryRegion = CustomersHistoryCurrentRows@MainOfficeCountryRegion,",
+				"          MainOfficePostalCode = CustomersHistoryCurrentRows@MainOfficePostalCode,",
+				"          RowEffectiveDate,",
+				"          RowExpirationDate = ct_last_mod_time",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> SelectColumns",
+				"SelectColumns derive(RowCurrentFlag = 0) ~> SetRowCurrentFlag",
+				"SetRowCurrentFlag, RowsToInserts union(byName: true)~> UpdatesAndInserts",
+				"UpdatesAndInserts alterRow(insertIf(isNull(SurrogateKey)),",
+				"     updateIf(not(isNull(SurrogateKey)))) ~> SetAction",
+				"split1@Inserts derive(RowEffectiveDate = ct_insertion_time) ~> InsertsWithEfectiveDate",
+				"split1@Updates derive(RowEffectiveDate = ct_last_mod_time) ~> UpdatesWithEffectiveDate",
+				"SetAction sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:true,",
+				"     upsertable:false,",
+				"     keys:['SurrogateKey'],",
+				"     skipKeyWrites:true,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> ApplyCT"
+			]
+		}
+	}
+}

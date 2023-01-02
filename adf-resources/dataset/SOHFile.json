@@ -1,0 +1,122 @@
+{
+	"name": "SOHFile",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AdvWorksLT_ADLS_LS",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"file": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "Files"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@dataset().file",
+					"type": "Expression"
+				},
+				"folderPath": "SOH/files",
+				"fileSystem": "stagging"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": [
+			{
+				"name": "SalesOrderID",
+				"type": "INT64"
+			},
+			{
+				"name": "OrderDate",
+				"type": "TIMESTAMP_MICROS"
+			},
+			{
+				"name": "DueDate",
+				"type": "TIMESTAMP_MICROS"
+			},
+			{
+				"name": "ShipDate",
+				"type": "TIMESTAMP_MICROS"
+			},
+			{
+				"name": "CustomerID",
+				"type": "INT64"
+			},
+			{
+				"name": "Status",
+				"type": "INT64"
+			},
+			{
+				"name": "OnlineOrderFlag",
+				"type": "BOOLEAN"
+			},
+			{
+				"name": "SalesOrderNumber",
+				"type": "UTF8"
+			},
+			{
+				"name": "PurchaseOrderNumber",
+				"type": "UTF8"
+			},
+			{
+				"name": "AccountNumber",
+				"type": "UTF8"
+			},
+			{
+				"name": "ShipMethod",
+				"type": "UTF8"
+			},
+			{
+				"name": "CreditCardApprovalCode",
+				"type": "INT32"
+			},
+			{
+				"name": "TaxAmt",
+				"type": "DOUBLE"
+			},
+			{
+				"name": "Freight",
+				"type": "DOUBLE"
+			},
+			{
+				"name": "Subtotal",
+				"type": "DOUBLE"
+			},
+			{
+				"name": "Comment",
+				"type": "INT32"
+			},
+			{
+				"name": "ShippingAddressLine1",
+				"type": "UTF8"
+			},
+			{
+				"name": "ShippingAddressLine2",
+				"type": "UTF8"
+			},
+			{
+				"name": "ShippingCity",
+				"type": "UTF8"
+			},
+			{
+				"name": "ShippingStateProvince",
+				"type": "UTF8"
+			},
+			{
+				"name": "ShippingCountryRegion",
+				"type": "UTF8"
+			},
+			{
+				"name": "ShippingPostalCode",
+				"type": "UTF8"
+			}
+		]
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

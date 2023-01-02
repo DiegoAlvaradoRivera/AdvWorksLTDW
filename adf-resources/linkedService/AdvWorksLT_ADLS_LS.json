@@ -1,0 +1,23 @@
+{
+	"name": "AdvWorksLT_ADLS_LS",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureBlobFS",
+		"typeProperties": {
+			"url": "https://demorg1dls.dfs.core.windows.net/",
+			"accountKey": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ThisRG_KV_LS",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "advworkslt-adls-ak"
+			}
+		},
+		"connectVia": {
+			"referenceName": "DefaultIR",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

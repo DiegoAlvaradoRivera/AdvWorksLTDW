@@ -1,0 +1,307 @@
+{
+	"name": "CustomerHistoryIncrLoad",
+	"properties": {
+		"activities": [
+			{
+				"name": "Extract Customer CT File",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Pre CT Lookup",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "Get Last Sync CT Version",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "Set CT File Name",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": {
+							"value": "@concat('\nSELECT \nCHANGE_TRACKING_CURRENT_VERSION() as current_ct_version,\nintegration.EasternTime() as extraction_time,\n*\nFROM integration.CustomerCTUpdates(', \nactivity('Get Last Sync CT Version').output.firstRow.sync_ct_version,\n')'\n)",
+							"type": "Expression"
+						},
+						"queryTimeout": "00:05:00",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"parallelCopies": 1,
+					"dataIntegrationUnits": 2,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "AdvWorksLTQuery",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "CustomerCTFile",
+						"type": "DatasetReference",
+						"parameters": {
+							"file": {
+								"value": "@variables('temporal_file_name')",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "Pre CT Lookup",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": "SELECT \nCHANGE_TRACKING_CURRENT_VERSION() as ct_version,\nintegration.EasternTime() as extraction_time",
+						"queryTimeout": "00:01:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "AdvWorksLTQuery",
+						"type": "DatasetReference"
+					}
+				}
+			},
+			{
+				"name": "Get Last Sync CT Version",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": "select *\nfrom integration.JobLogs\nwhere pipeline_name = 'customer_sync'\norder by sync_timestamp desc",
+						"queryTimeout": "00:01:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "AdvWorksLTQuery",
+						"type": "DatasetReference"
+					}
+				}
+			},
+			{
+				"name": "Set CT File Name",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "temporal_file_name",
+					"value": {
+						"value": "@concat(\n    'temporal-', \n    pipeline().RunId,\n    '.parquet'\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Post CT Lookup",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "Extract Customer CT File",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "ParquetSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						}
+					},
+					"dataset": {
+						"referenceName": "CustomerCTFile",
+						"type": "DatasetReference",
+						"parameters": {
+							"file": {
+								"value": "@variables('temporal_file_name')",
+								"type": "Expression"
+							}
+						}
+					}
+				}
+			},
+			{
+				"name": "Log Job Run",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "Customer History Incremental Load",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[integration].[sp_LogJobRun]",
+					"storedProcedureParameters": {
+						"pipeline_name": {
+							"value": {
+								"value": "@pipeline().parameters.pipeline_name",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"pipeline_run_id": {
+							"value": {
+								"value": "@pipeline().RunId",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"sync_ct_version": {
+							"value": {
+								"value": "@if(\n    equals(\n        activity('Extract CT File').output.rowsRead, \n        0\n    ), \n    activity('Pre CT Lookup').output.firstRow.ct_version, \n    activity('Post CT Lookup').output.firstRow.current_ct_version\n)",
+								"type": "Expression"
+							},
+							"type": "Int32"
+						},
+						"sync_timestamp": {
+							"value": {
+								"value": "@if(\n    equals(\n        activity('Extract CT File').output.rowsRead, \n        0\n    ), \n    activity('Pre CT Lookup').output.firstRow.extraction_time, \n    activity('Post CT Lookup').output.firstRow.extraction_time\n)",
+								"type": "Expression"
+							},
+							"type": "DateTime"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AdvWorksLT_SQLDB_LS",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "Customer History Incremental Load",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [
+					{
+						"activity": "Post CT Lookup",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "DF_CustomerHistoryIncrLoad",
+						"type": "DataFlowReference",
+						"datasetParameters": {
+							"CTFile": {
+								"file": {
+									"value": "@variables('temporal_file_name')",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					"integrationRuntime": {
+						"referenceName": "DefaultIR",
+						"type": "IntegrationRuntimeReference"
+					},
+					"traceLevel": "Fine"
+				}
+			}
+		],
+		"parameters": {
+			"pipeline_name": {
+				"type": "string",
+				"defaultValue": "customer_sync"
+			}
+		},
+		"variables": {
+			"temporal_file_name": {
+				"type": "String"
+			},
+			"ct_version": {
+				"type": "String"
+			},
+			"extraction_tm": {
+				"type": "String"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-12-31T16:52:55Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

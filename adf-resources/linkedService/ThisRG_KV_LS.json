@@ -1,0 +1,11 @@
+{
+	"name": "ThisRG_KV_LS",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureKeyVault",
+		"typeProperties": {
+			"baseUrl": "https://demorg1-kv3.vault.azure.net/"
+		}
+	}
+}

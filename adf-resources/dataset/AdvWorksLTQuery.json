@@ -1,0 +1,16 @@
+{
+	"name": "AdvWorksLTQuery",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AdvWorksLT_SQLDB_LS",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "AdvWorksLT"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

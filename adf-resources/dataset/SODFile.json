@@ -1,0 +1,62 @@
+{
+	"name": "SODFile",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AdvWorksLT_ADLS_LS",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"file": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "Files"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@dataset().file",
+					"type": "Expression"
+				},
+				"folderPath": "SOD/files",
+				"fileSystem": "stagging"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": [
+			{
+				"name": "SalesOrderDetailID",
+				"type": "INT64"
+			},
+			{
+				"name": "SalesOrderID",
+				"type": "INT64"
+			},
+			{
+				"name": "ProductID",
+				"type": "INT64"
+			},
+			{
+				"name": "OrderQty",
+				"type": "INT64"
+			},
+			{
+				"name": "UnitPrice",
+				"type": "DOUBLE"
+			},
+			{
+				"name": "UnitPriceDiscount",
+				"type": "DOUBLE"
+			},
+			{
+				"name": "LineTotal",
+				"type": "DOUBLE"
+			}
+		]
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

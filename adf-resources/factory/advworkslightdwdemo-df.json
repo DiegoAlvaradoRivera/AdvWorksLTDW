@@ -1,0 +1,9 @@
+{
+	"name": "advworkslightdwdemo-df",
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "92767466-c4b4-4572-87ef-3c233977dfba",
+		"tenantId": "c6921298-351d-4aaa-a1a0-eaf1b517ec1e"
+	}
+}

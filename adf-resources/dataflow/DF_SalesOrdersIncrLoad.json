@@ -1,0 +1,134 @@
+{
+	"name": "DF_SalesOrdersIncrLoad",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "SOHFile",
+						"type": "DatasetReference"
+					},
+					"name": "SOHs"
+				},
+				{
+					"dataset": {
+						"referenceName": "SODFile",
+						"type": "DatasetReference"
+					},
+					"name": "SODs"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "FactSalesOrders",
+						"type": "DatasetReference"
+					},
+					"name": "SaveSalesOrders"
+				}
+			],
+			"transformations": [
+				{
+					"name": "LeftOuterJoin"
+				},
+				{
+					"name": "AddAllocatedColumns"
+				},
+				{
+					"name": "SelectColumns"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          SalesOrderID as long,",
+				"          OrderDate as timestamp,",
+				"          DueDate as timestamp,",
+				"          ShipDate as timestamp,",
+				"          CustomerID as long,",
+				"          Status as long,",
+				"          OnlineOrderFlag as boolean,",
+				"          SalesOrderNumber as string,",
+				"          PurchaseOrderNumber as string,",
+				"          AccountNumber as string,",
+				"          ShipMethod as string,",
+				"          CreditCardApprovalCode as integer,",
+				"          TaxAmt as double,",
+				"          Freight as double,",
+				"          Subtotal as double,",
+				"          Comment as integer,",
+				"          ShippingAddressLine1 as string,",
+				"          ShippingAddressLine2 as string,",
+				"          ShippingCity as string,",
+				"          ShippingStateProvince as string,",
+				"          ShippingCountryRegion as string,",
+				"          ShippingPostalCode as string",
+				"     ),",
+				"     allowSchemaDrift: false,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'parquet') ~> SOHs",
+				"source(output(",
+				"          SalesOrderDetailID as long,",
+				"          SalesOrderID as long,",
+				"          ProductID as long,",
+				"          OrderQty as long,",
+				"          UnitPrice as double,",
+				"          UnitPriceDiscount as double,",
+				"          LineTotal as double",
+				"     ),",
+				"     allowSchemaDrift: false,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'parquet') ~> SODs",
+				"SOHs, SODs join(SOHs@SalesOrderID == SODs@SalesOrderID,",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> LeftOuterJoin",
+				"LeftOuterJoin derive(AllocatedTaxAmt = (TaxAmt / Subtotal) * TaxAmt,",
+				"          AllocatedFreight = (Freight/ Subtotal) * Freight) ~> AddAllocatedColumns",
+				"AddAllocatedColumns select(mapColumn(",
+				"          SalesOrderID = SOHs@SalesOrderID,",
+				"          OrderDate,",
+				"          DueDate,",
+				"          ShipDate,",
+				"          CustomerID,",
+				"          Status,",
+				"          OnlineOrderFlag,",
+				"          SalesOrderNumber,",
+				"          PurchaseOrderNumber,",
+				"          AccountNumber,",
+				"          ShipMethod,",
+				"          CreditCardApprovalCode,",
+				"          Comment,",
+				"          ShippingAddressLine1,",
+				"          ShippingAddressLine2,",
+				"          ShippingCity,",
+				"          ShippingStateProvince,",
+				"          ShippingCountryRegion,",
+				"          ShippingPostalCode,",
+				"          SalesOrderDetailID,",
+				"          ProductID,",
+				"          OrderQty,",
+				"          UnitPrice,",
+				"          UnitPriceDiscount,",
+				"          AllocatedTaxAmt,",
+				"          AllocatedFreight",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> SelectColumns",
+				"SelectColumns sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> SaveSalesOrders"
+			]
+		}
+	}
+}

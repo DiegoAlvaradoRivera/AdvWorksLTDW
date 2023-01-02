@@ -1,0 +1,126 @@
+{
+	"name": "CustomerCTFile",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AdvWorksLT_ADLS_LS",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"file": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "Files"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@dataset().file",
+					"type": "Expression"
+				},
+				"folderPath": "customer/ct_files",
+				"fileSystem": "stagging"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": [
+			{
+				"name": "current_ct_version",
+				"type": "INT64"
+			},
+			{
+				"name": "extraction_time",
+				"type": "INT96"
+			},
+			{
+				"name": "ct_key",
+				"type": "INT32"
+			},
+			{
+				"name": "ct_operation",
+				"type": "UTF8"
+			},
+			{
+				"name": "ct_insertion_time",
+				"type": "INT96"
+			},
+			{
+				"name": "ct_last_mod_time",
+				"type": "INT96"
+			},
+			{
+				"name": "CustomerID",
+				"type": "INT32"
+			},
+			{
+				"name": "NameStyle",
+				"type": "BOOLEAN"
+			},
+			{
+				"name": "Title",
+				"type": "UTF8"
+			},
+			{
+				"name": "FirstName",
+				"type": "UTF8"
+			},
+			{
+				"name": "MiddleName",
+				"type": "UTF8"
+			},
+			{
+				"name": "LastName",
+				"type": "UTF8"
+			},
+			{
+				"name": "Suffix",
+				"type": "UTF8"
+			},
+			{
+				"name": "CompanyName",
+				"type": "UTF8"
+			},
+			{
+				"name": "SalesPerson",
+				"type": "UTF8"
+			},
+			{
+				"name": "EmailAddress",
+				"type": "UTF8"
+			},
+			{
+				"name": "Phone",
+				"type": "UTF8"
+			},
+			{
+				"name": "MainOfficeAddressLine1",
+				"type": "UTF8"
+			},
+			{
+				"name": "MainOfficeAddressLine2",
+				"type": "UTF8"
+			},
+			{
+				"name": "MainOfficeCity",
+				"type": "UTF8"
+			},
+			{
+				"name": "MainOfficeStateProvince",
+				"type": "UTF8"
+			},
+			{
+				"name": "MainOfficeCountryRegion",
+				"type": "UTF8"
+			},
+			{
+				"name": "MainOfficePostalCode",
+				"type": "UTF8"
+			}
+		]
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

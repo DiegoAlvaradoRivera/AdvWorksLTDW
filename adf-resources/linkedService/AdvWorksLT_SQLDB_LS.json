@@ -1,0 +1,22 @@
+{
+	"name": "AdvWorksLT_SQLDB_LS",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureSqlDatabase",
+		"typeProperties": {
+			"connectionString": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ThisRG_KV_LS",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "advworkslt-sqldb-cs"
+			}
+		},
+		"connectVia": {
+			"referenceName": "DefaultIR",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

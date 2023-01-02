@@ -1,0 +1,34 @@
+{
+	"name": "AdvWorksLTTable",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AdvWorksLT_SQLDB_LS",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"table": {
+				"type": "string"
+			},
+			"schema": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "AdvWorksLT"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": {
+				"value": "@dataset().schema",
+				"type": "Expression"
+			},
+			"table": {
+				"value": "@dataset().table",
+				"type": "Expression"
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

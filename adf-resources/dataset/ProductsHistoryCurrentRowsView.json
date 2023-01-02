@@ -1,0 +1,19 @@
+{
+	"name": "ProductsHistoryCurrentRowsView",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AdvWorksLT_SQLDB_LS",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "Presentation"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": "presentation",
+			"table": "ProductsHistoryCurrentRows"
+		}
+	}
+}

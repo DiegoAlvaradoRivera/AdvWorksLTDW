@@ -1,0 +1,7 @@
+/TODO
+/otros
+/main-local.ipynb
+/adf-resources/**/~*.json
+/adf-resources/deployment/adf_config.csv
+/.ipynb_checkpoints
+/.idea

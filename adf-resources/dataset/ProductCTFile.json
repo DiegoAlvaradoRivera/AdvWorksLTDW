@@ -1,0 +1,124 @@
+{
+	"name": "ProductCTFile",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AdvWorksLT_ADLS_LS",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"file": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "Files"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@dataset().file",
+					"type": "Expression"
+				},
+				"folderPath": "product/ct_files",
+				"fileSystem": "stagging"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": [
+			{
+				"name": "current_ct_version",
+				"type": "INT64"
+			},
+			{
+				"name": "extraction_time",
+				"type": "INT96"
+			},
+			{
+				"name": "ct_key",
+				"type": "INT32"
+			},
+			{
+				"name": "ct_operation",
+				"type": "UTF8"
+			},
+			{
+				"name": "ct_insertion_time",
+				"type": "INT96"
+			},
+			{
+				"name": "ct_last_mod_time",
+				"type": "INT96"
+			},
+			{
+				"name": "ProductID",
+				"type": "INT32"
+			},
+			{
+				"name": "Name",
+				"type": "UTF8"
+			},
+			{
+				"name": "ProductNumber",
+				"type": "UTF8"
+			},
+			{
+				"name": "Color",
+				"type": "UTF8"
+			},
+			{
+				"name": "StandardCost",
+				"type": "DECIMAL",
+				"precision": 19,
+				"scale": 4
+			},
+			{
+				"name": "ListPrice",
+				"type": "DECIMAL",
+				"precision": 19,
+				"scale": 4
+			},
+			{
+				"name": "Size",
+				"type": "UTF8"
+			},
+			{
+				"name": "Weight",
+				"type": "DECIMAL",
+				"precision": 8,
+				"scale": 2
+			},
+			{
+				"name": "SellStartDate",
+				"type": "INT96"
+			},
+			{
+				"name": "SellEndDate",
+				"type": "INT96"
+			},
+			{
+				"name": "DiscontinuedDate",
+				"type": "INT96"
+			},
+			{
+				"name": "ProductModel",
+				"type": "UTF8"
+			},
+			{
+				"name": "ProductModelDescription",
+				"type": "UTF8"
+			},
+			{
+				"name": "ProductSubcategory",
+				"type": "UTF8"
+			},
+			{
+				"name": "ProductCategory",
+				"type": "UTF8"
+			}
+		]
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

@@ -29,7 +29,7 @@
 		},
 		"schema": [
 			{
-				"name": "current_ct_version",
+				"name": "ct_current_version",
 				"type": "INT64"
 			},
 			{

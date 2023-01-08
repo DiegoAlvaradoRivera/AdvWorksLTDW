@@ -84,9 +84,11 @@ The following table describes the customer dimension attributes and the columns 
 
 The following table describes the Sales Order fact table measures and the columns from which data provides.
 
+- Header-level measurements like TaxAmt and Freight are allocated to the line-level using the percentage by distributes the amount proportially to LineSalesAmount/HeaderSalesAmount
+
 | Target   Column        | Data Type     | Description                                                                                                       | Source Column                           |
 |------------------------|---------------|-------------------------------------------------------------------------------------------------------------------|-----------------------------------------|
-| SalesOrderID           | LONG          | Primary key of SalesOrderDetail                                                                                   | SalesOrderHeader.SalesOrderID           |
+| SalesOrderID           | LONG          | Primary key of SalesOrder                                                                                         | SalesOrderHeader.SalesOrderID           |
 | OrderDate              | DATETIME      | Dates the sales order was   created                                                                               | SalesOrderHeader.OrderDate              |
 | ShipDate               | DATETIME      | Date the order was shipped to   the customer                                                                      | SalesOrderHeader.ShipDate               |
 | DueDate                | DATETIME      | Date the order is due to the   customer                                                                           | SalesOrderHeader.DueDate                |

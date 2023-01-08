@@ -14,6 +14,8 @@ FUNCTIONS
 	customer data since the last seen ct version
 - ProductCTUupdates: returns the product CT metadata and the current 
 	product data since the last seen ct version
+- columns_in_sys_change_columns: function that return the number of columns that have changed @sys_change_columns
+	in the @sourceSchema.@sourceTable table tracked by @targetTable 
 
 
 VIEWS
@@ -31,6 +33,8 @@ VIEWS
 
 
 TABLES
+- TargetSourceMappings: table the contains the columns tracked by the dimensions.
+	This table is used to filter the change tracking rows.
 - SalesOrdersToExtract: table that contains the SalesOrderIDs of the 
 	sales orders that have reached a final state and are going to be 
 	extracted.
@@ -89,6 +93,84 @@ begin
     return @result
 end;
 go
+
+
+
+/*
+Name: 	     integration.TargetSourceMappings
+Description: table that contains the columns that are used by each dimension table.
+	This table is used for fintering change tracking changes that affect only these columns.
+*/
+create table integration.TargetSourceMappings(
+    TargetTable varchar(50),
+    SourceSchema varchar(50),
+    SourceTable varchar(50),
+    SourceColumn varchar(50),
+);
+go 
+
+insert into integration.TargetSourceMappings
+values 
+-- columns used by the DimProduct table
+('DimProduct', 'SalesLT', 'Product', 'ProductID'),
+('DimProduct', 'SalesLT', 'Product', 'Name'),
+('DimProduct', 'SalesLT', 'Product', 'ProductNumber'),
+('DimProduct', 'SalesLT', 'Product', 'Color'),
+('DimProduct', 'SalesLT', 'Product', 'StandardCost'),
+('DimProduct', 'SalesLT', 'Product', 'ListPrice'),
+('DimProduct', 'SalesLT', 'Product', 'Size'),
+('DimProduct', 'SalesLT', 'Product', 'Weight'),
+('DimProduct', 'SalesLT', 'Product', 'ProductCategoryID'),
+('DimProduct', 'SalesLT', 'Product', 'ProductModelID'),
+('DimProduct', 'SalesLT', 'Product', 'SellStartDate'),
+('DimProduct', 'SalesLT', 'Product', 'SellEndDate'),
+('DimProduct', 'SalesLT', 'Product', 'DiscontinuedDate'),
+
+-- columns used by the DimCustomer table
+('DimCustomer', 'SalesLT', 'Customer', 'CustomerID'),
+('DimCustomer', 'SalesLT', 'Customer', 'NameStyle'),
+('DimCustomer', 'SalesLT', 'Customer', 'Title'),
+('DimCustomer', 'SalesLT', 'Customer', 'FirstName'),
+('DimCustomer', 'SalesLT', 'Customer', 'MiddleName'),
+('DimCustomer', 'SalesLT', 'Customer', 'LastName'),
+('DimCustomer', 'SalesLT', 'Customer', 'Suffix'),
+('DimCustomer', 'SalesLT', 'Customer', 'CompanyName'),
+('DimCustomer', 'SalesLT', 'Customer', 'SalesPerson'),
+('DimCustomer', 'SalesLT', 'Customer', 'EmailAddress'),
+('DimCustomer', 'SalesLT', 'Customer', 'Phone')
+;
+go 
+
+
+/*
+Name: 	     integration.columns_in_sys_change_columns
+Description: function that return the number of columns that have changed @sys_change_columns
+	in the @sourceSchema.@sourceTable table tracked by @targetTable 
+*/
+create or alter function integration.columns_in_sys_change_columns(
+    @sys_change_columns varbinary(4100),
+    @targetTable varchar(50),
+    @sourceSchema varchar(50),
+    @sourceTable varchar(50)
+)
+returns int 
+as
+begin 
+    declare @result int;
+    
+    select 
+    @result = sum(
+        CHANGE_TRACKING_IS_COLUMN_IN_MASK(
+            COLUMNPROPERTY(OBJECT_ID(concat(@sourceSchema, '.', @sourceTable)), SourceColumn, 'ColumnId'), 
+            @sys_change_columns
+        )
+    )
+    from integration.TargetSourceMappings
+    where TargetTable = @targetTable and SourceSchema = @sourceSchema and SourceTable = @sourceTable
+    
+    return @result;
+end;
+go 
 
 
 /*
@@ -161,6 +243,7 @@ with
 		integration.CTCreationVersionAtEasternTime(SYS_CHANGE_CREATION_VERSION) as ct_insertion_time,
 		integration.CTCreationVersionAtEasternTime(SYS_CHANGE_VERSION) as ct_last_mod_time
 		from changetable(changes SalesLT.Customer, @cust_sync_last_ct_version) as CT
+		where integration.columns_in_sys_change_columns(SYS_CHANGE_COLUMNS, 'DimCustomer', 'SalesLT', 'Customer') > 0
 	),
 	CustomerAddressCT as (
 		select 
@@ -416,6 +499,7 @@ return
 		integration.CTCreationVersionAtEasternTime(SYS_CHANGE_CREATION_VERSION) as ct_insertion_time,
 		integration.CTCreationVersionAtEasternTime(SYS_CHANGE_VERSION) as ct_last_mod_time
 		from changetable(changes SalesLT.Product, @prod_sync_last_ct_version) as CT
+		where integration.columns_in_sys_change_columns(SYS_CHANGE_COLUMNS, 'DimProduct', 'SalesLT', 'Product') > 0
 	),
 	productModelCT as (
 		select
@@ -514,8 +598,8 @@ Name: 	 integration.sp_LogJobRun
 Description: procedure to log a job run
 */
 create procedure integration.sp_LogJobRun(
-	@pipeline_name   [nvarchar](50),
-	@pipeline_run_id [nvarchar](100),
+	@pipeline_name   [varchar](50),
+	@pipeline_run_id [varchar](100),
 	@sync_ct_version [int],
 	@sync_timestamp  [datetime]
 )

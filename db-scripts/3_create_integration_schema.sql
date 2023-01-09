@@ -626,7 +626,7 @@ create or alter procedure integration.SP_ProductCTUpdates (
 as 
 begin 
 	select 
-	CHANGE_TRACKING_CURRENT_VERSION() as s,
+	CHANGE_TRACKING_CURRENT_VERSION() as ct_current_version,
 	integration.EasternTime() as extraction_time,
 	* 
 	from integration.ProductCTUpdates(@prod_sync_last_ct_version);

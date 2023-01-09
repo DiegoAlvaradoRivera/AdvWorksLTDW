@@ -15,5 +15,6 @@
 			"schema": "integration",
 			"table": "SalesOrdersToExtract"
 		}
-	}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
 }

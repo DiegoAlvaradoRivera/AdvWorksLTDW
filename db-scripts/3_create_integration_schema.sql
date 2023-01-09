@@ -14,7 +14,7 @@ FUNCTIONS
 	customer data since the last seen ct version
 - ProductCTUupdates: returns the product CT metadata and the current 
 	product data since the last seen ct version
-- columns_in_sys_change_columns: function that return the number of columns that have changed @sys_change_columns
+- NumberOfChangedColumnInTable: function that return the number of columns that have changed @sys_change_columns
 	in the @sourceSchema.@sourceTable table tracked by @targetTable 
 
 
@@ -38,13 +38,8 @@ TABLES
 - SalesOrdersToExtract: table that contains the SalesOrderIDs of the 
 	sales orders that have reached a final state and are going to be 
 	extracted.
-- JobLogs: table that contains the logs of the ETL jobs
-
-STORED PROCEDURES
-- sp_LogJobRun: procedure to log a job run
 
 */
-
 
 
 set nocount on;
@@ -111,43 +106,43 @@ go
 
 insert into integration.TargetSourceMappings
 values 
--- columns used by the DimProduct table
-('DimProduct', 'SalesLT', 'Product', 'ProductID'),
-('DimProduct', 'SalesLT', 'Product', 'Name'),
-('DimProduct', 'SalesLT', 'Product', 'ProductNumber'),
-('DimProduct', 'SalesLT', 'Product', 'Color'),
-('DimProduct', 'SalesLT', 'Product', 'StandardCost'),
-('DimProduct', 'SalesLT', 'Product', 'ListPrice'),
-('DimProduct', 'SalesLT', 'Product', 'Size'),
-('DimProduct', 'SalesLT', 'Product', 'Weight'),
-('DimProduct', 'SalesLT', 'Product', 'ProductCategoryID'),
-('DimProduct', 'SalesLT', 'Product', 'ProductModelID'),
-('DimProduct', 'SalesLT', 'Product', 'SellStartDate'),
-('DimProduct', 'SalesLT', 'Product', 'SellEndDate'),
-('DimProduct', 'SalesLT', 'Product', 'DiscontinuedDate'),
+	-- columns used by the DimProduct table
+	('DimProduct', 'SalesLT', 'Product', 'ProductID'),
+	('DimProduct', 'SalesLT', 'Product', 'Name'),
+	('DimProduct', 'SalesLT', 'Product', 'ProductNumber'),
+	('DimProduct', 'SalesLT', 'Product', 'Color'),
+	('DimProduct', 'SalesLT', 'Product', 'StandardCost'),
+	('DimProduct', 'SalesLT', 'Product', 'ListPrice'),
+	('DimProduct', 'SalesLT', 'Product', 'Size'),
+	('DimProduct', 'SalesLT', 'Product', 'Weight'),
+	('DimProduct', 'SalesLT', 'Product', 'ProductCategoryID'),
+	('DimProduct', 'SalesLT', 'Product', 'ProductModelID'),
+	('DimProduct', 'SalesLT', 'Product', 'SellStartDate'),
+	('DimProduct', 'SalesLT', 'Product', 'SellEndDate'),
+	('DimProduct', 'SalesLT', 'Product', 'DiscontinuedDate'),
 
--- columns used by the DimCustomer table
-('DimCustomer', 'SalesLT', 'Customer', 'CustomerID'),
-('DimCustomer', 'SalesLT', 'Customer', 'NameStyle'),
-('DimCustomer', 'SalesLT', 'Customer', 'Title'),
-('DimCustomer', 'SalesLT', 'Customer', 'FirstName'),
-('DimCustomer', 'SalesLT', 'Customer', 'MiddleName'),
-('DimCustomer', 'SalesLT', 'Customer', 'LastName'),
-('DimCustomer', 'SalesLT', 'Customer', 'Suffix'),
-('DimCustomer', 'SalesLT', 'Customer', 'CompanyName'),
-('DimCustomer', 'SalesLT', 'Customer', 'SalesPerson'),
-('DimCustomer', 'SalesLT', 'Customer', 'EmailAddress'),
-('DimCustomer', 'SalesLT', 'Customer', 'Phone')
+	-- columns used by the DimCustomer table
+	('DimCustomer', 'SalesLT', 'Customer', 'CustomerID'),
+	('DimCustomer', 'SalesLT', 'Customer', 'NameStyle'),
+	('DimCustomer', 'SalesLT', 'Customer', 'Title'),
+	('DimCustomer', 'SalesLT', 'Customer', 'FirstName'),
+	('DimCustomer', 'SalesLT', 'Customer', 'MiddleName'),
+	('DimCustomer', 'SalesLT', 'Customer', 'LastName'),
+	('DimCustomer', 'SalesLT', 'Customer', 'Suffix'),
+	('DimCustomer', 'SalesLT', 'Customer', 'CompanyName'),
+	('DimCustomer', 'SalesLT', 'Customer', 'SalesPerson'),
+	('DimCustomer', 'SalesLT', 'Customer', 'EmailAddress'),
+	('DimCustomer', 'SalesLT', 'Customer', 'Phone')
 ;
 go 
 
 
 /*
-Name: 	     integration.columns_in_sys_change_columns
+Name: 	     integration.NumberOfChangedColumnInTable
 Description: function that return the number of columns that have changed @sys_change_columns
 	in the @sourceSchema.@sourceTable table tracked by @targetTable 
 */
-create or alter function integration.columns_in_sys_change_columns(
+create or alter function integration.NumberOfChangedColumnInTable(
     @sys_change_columns varbinary(4100),
     @targetTable varchar(50),
     @sourceSchema varchar(50),
@@ -243,7 +238,7 @@ with
 		integration.CTCreationVersionAtEasternTime(SYS_CHANGE_CREATION_VERSION) as ct_insertion_time,
 		integration.CTCreationVersionAtEasternTime(SYS_CHANGE_VERSION) as ct_last_mod_time
 		from changetable(changes SalesLT.Customer, @cust_sync_last_ct_version) as CT
-		where integration.columns_in_sys_change_columns(SYS_CHANGE_COLUMNS, 'DimCustomer', 'SalesLT', 'Customer') > 0
+		where integration.NumberOfChangedColumnInTable(SYS_CHANGE_COLUMNS, 'DimCustomer', 'SalesLT', 'Customer') > 0
 	),
 	CustomerAddressCT as (
 		select 
@@ -303,6 +298,23 @@ go
 
 
 /*
+*/
+create or alter procedure integration.SP_CustomerCTUpdates (
+	@cust_sync_last_ct_version int
+)
+as 
+begin 
+	select 
+	CHANGE_TRACKING_CURRENT_VERSION() as ct_current_version,
+	integration.EasternTime() as extraction_time,
+	* 
+	from integration.CustomerCTUpdates(@cust_sync_last_ct_version);
+	return;
+end;
+go
+
+
+/*
 Name: 	 integration.SalesOrdersToExtract
 Description: table that is populated with the sales order ids to 
 	extract by the sales order syncronization job
@@ -311,7 +323,6 @@ create table integration.SalesOrdersToExtract(
 	SalesOrderId 	INT 	NOT NULL
 )
 go
-
 
 /*
 Name: 	 integration.SalesOrderHeader
@@ -324,11 +335,13 @@ as
 	-- PK
 	SOH.SalesOrderID, 
 	-- FK
+	SOH.CustomerID,
+	-- metrics
+
 	SOH.OrderDate, 
 	SOH.DueDate, 
 	SOH.ShipDate,
-	SOH.CustomerID,
-	-- metrics
+
 	SOH.Status, 
 	SOH.OnlineOrderFlag, 
 	SOH.SalesOrderNumber,
@@ -371,6 +384,31 @@ as
 	SOD.UnitPriceDiscount, 
 	SOD.LineTotal
 	from SalesLT.SalesOrderDetail as SOD;
+go
+
+
+/*
+TODO
+*/
+create or alter procedure integration.SP_DetectSOsToExtract
+as 
+begin 
+    -- extract all finished orders and then, for the SalesOrderIDs in integration.SalesOrdersToExtract
+    -- delete them is the among in the finished orders
+    -- insert finished orders that are not in the 
+    with 
+    finished_orders as (
+        select SalesOrderID from integration.SalesOrderHeader where status = 5
+    )
+    merge integration.SalesOrdersToExtract as target 
+    using finished_orders as source 
+    on target.SalesOrderID = source.SalesOrderID
+    when matched then
+        delete
+    when not matched by target then 
+        insert (SalesOrderID)
+        values (source.SalesOrderID);
+end; 
 go
 
 
@@ -499,7 +537,7 @@ return
 		integration.CTCreationVersionAtEasternTime(SYS_CHANGE_CREATION_VERSION) as ct_insertion_time,
 		integration.CTCreationVersionAtEasternTime(SYS_CHANGE_VERSION) as ct_last_mod_time
 		from changetable(changes SalesLT.Product, @prod_sync_last_ct_version) as CT
-		where integration.columns_in_sys_change_columns(SYS_CHANGE_COLUMNS, 'DimProduct', 'SalesLT', 'Product') > 0
+		where integration.NumberOfChangedColumnInTable(SYS_CHANGE_COLUMNS, 'DimProduct', 'SalesLT', 'Product') > 0
 	),
 	productModelCT as (
 		select
@@ -580,38 +618,21 @@ go
 
 
 /*
-Name: 	 integration.JobLogs
-Description: table in which the job runs are logged
+TODO
 */
-create table integration.JobLogs(
-	pipeline_name 		[nvarchar](50)	NOT NULL,
-	pipeline_run_id     [nvarchar](100) NOT NULL,
-	sync_ct_version 	[int]			NULL,
-	sync_timestamp      [datetime]		NOT NULL
-	primary key (pipeline_name, pipeline_run_id)
-);
-go
-
-
-/*
-Name: 	 integration.sp_LogJobRun
-Description: procedure to log a job run
-*/
-create procedure integration.sp_LogJobRun(
-	@pipeline_name   [varchar](50),
-	@pipeline_run_id [varchar](100),
-	@sync_ct_version [int],
-	@sync_timestamp  [datetime]
+create or alter procedure integration.SP_ProductCTUpdates (
+	@prod_sync_last_ct_version int
 )
-as
+as 
 begin 
-	insert into integration.JobLogs
-	(pipeline_name,  pipeline_run_id,  sync_ct_version,  sync_timestamp)
-	values
-	(@pipeline_name, @pipeline_run_id, @sync_ct_version, @sync_timestamp)
+	select 
+	CHANGE_TRACKING_CURRENT_VERSION() as s,
+	integration.EasternTime() as extraction_time,
+	* 
+	from integration.ProductCTUpdates(@prod_sync_last_ct_version);
+	return;
 end;
-go 
-
+go
 
 print 'INTEGRATION SCHEMA CREATED SUCCESSFULLY';
 go 

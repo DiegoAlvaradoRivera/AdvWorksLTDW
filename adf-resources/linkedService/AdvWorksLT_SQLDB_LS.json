@@ -13,10 +13,6 @@
 				},
 				"secretName": "advworkslt-sqldb-cs"
 			}
-		},
-		"connectVia": {
-			"referenceName": "DefaultIR",
-			"type": "IntegrationRuntimeReference"
 		}
 	}
 }

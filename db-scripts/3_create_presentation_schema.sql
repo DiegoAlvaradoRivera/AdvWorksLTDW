@@ -4,12 +4,10 @@
 DESCRIPTION
 This schema contains the tables nad views that conform the DW presentation area.
 
-
 TABLES
 - ProductsHistory: table that contains the history of changes of the product entities.
 - CustomersHistory: table that contains the history of changes of the customer entities.
 - FactSalesOrdes: table that contains the shipped sales orders.
-
 
 VIEWS
 - ProductsHistoryCurrentRows: view that returns the active row for the product entities.
@@ -21,7 +19,6 @@ VIEWS
 
 */
 
-
 CREATE SCHEMA presentation;
 GO
 
@@ -30,7 +27,11 @@ Name: 	     presentation.ProductsHistory
 Description: table that contains the history of changes of the product entities.
 */
 CREATE TABLE presentation.ProductsHistory(
+
+  -- PK
   [SurrogateKey]              [int] identity(1, 1) NOT NULL,
+
+  -- attributes 
   [ProductID]                 [int] NOT NULL,
   [Name]                      [nvarchar](50) NOT NULL,
   [ProductNumber]             [nvarchar](25) NOT NULL,
@@ -46,32 +47,26 @@ CREATE TABLE presentation.ProductsHistory(
   [ProductModelDescription]   [nvarchar](400) NOT NULL,
   [ProductSubcategory]        [nvarchar](50) NOT NULL,
   [ProductCategory]           [nvarchar](50) NOT NULL,
+
   -- SCD 2 Metadata Columns
   [RowEffectiveDate]          [datetime] NOT NULL,
   [RowExpirationDate]         [datetime] NOT NULL,
   [RowCurrentFlag]            [bit] NOT NULL,
+  
   CONSTRAINT [PK_DimProduct] PRIMARY KEY CLUSTERED ([SurrogateKey])
 );
 GO
 
-/*
-Name: 	     presentation.ProductsHistoryCurrentRows
-Description: view that returns the active row for the product entities.
-*/
-CREATE VIEW presentation.ProductsHistoryCurrentRows 
-AS 
-  SELECT * 
-  FROM presentation.ProductsHistory 
-  WHERE RowCurrentFlag = 1;
-GO
 
 /*
 Name: 	     presentation.CustomersHistory
 Description: table that contains the history of changes of the customer entities.
 */
 CREATE TABLE presentation.CustomersHistory(
-  -- primary key
+  
+  -- PK
   [SurrogateKey]              [int] identity(1, 1) NOT NULL,
+  
   -- attributes
   [CustomerID]                [int] NOT NULL,
   [NameStyle]                 [bit] NOT NULL,
@@ -90,23 +85,14 @@ CREATE TABLE presentation.CustomersHistory(
   [MainOfficeStateProvince]   [nvarchar](50) NOT NULL,
   [MainOfficeCountryRegion]   [nvarchar](50) NOT NULL,
   [MainOfficePostalCode]      [nvarchar](15) NOT NULL,
+  
   -- SCD 2 Metadata Columns
   [RowEffectiveDate]          [datetime] NOT NULL,
   [RowExpirationDate]         [datetime] NOT NULL,
   [RowCurrentFlag]            [bit] NOT NULL,
+  
   CONSTRAINT [PK_DimCustomer] PRIMARY KEY CLUSTERED ([SurrogateKey])
 );
-GO
-
-/*
-Name: 	     presentation.CustomersHistoryCurrentRows
-Description: view that returns the active row for the customer entities.
-*/
-CREATE VIEW presentation.CustomersHistoryCurrentRows 
-AS 
-  SELECT * 
-  FROM presentation.CustomersHistory 
-  WHERE RowCurrentFlag = 1;
 GO
 
 /*
@@ -114,8 +100,16 @@ Name: 	     presentation.FactSalesOrders
 Description: table that contains the shipped sales orders.
 */
 CREATE TABLE presentation.FactSalesOrders(
-	-- SOH Fields
+
+  -- PK
   [SalesOrderID]              [int] NOT NULL,
+  [SalesOrderDetailID]        [int] NOT NULL,
+
+  -- FKs
+  [CustomerSK]                [int] NOT NULL,
+  [ProductSK]                 [int] NOT NULL,
+
+	-- SOH Fields
 	[OrderDate]                 [datetime] NOT NULL,
 	[DueDate]                   [datetime] NOT NULL,
 	[ShipDate]                  [datetime] NULL,
@@ -130,6 +124,7 @@ CREATE TABLE presentation.FactSalesOrders(
 	[AllocatedTaxAmt]           [money] NOT NULL,
 	[AllocatedFreight]          [money] NOT NULL,
 	[Comment]                   [nvarchar](max) NULL,
+
 	-- shipping info
 	[ShippingAddressLine1]      [nvarchar](60) NOT NULL,
 	[ShippingAddressLine2]      [nvarchar](60) NULL,
@@ -137,15 +132,18 @@ CREATE TABLE presentation.FactSalesOrders(
 	[ShippingStateProvince]     [nvarchar](50) NOT NULL,
 	[ShippingCountryRegion]     [nvarchar](50) NOT NULL,
 	[ShippingPostalCode]        [nvarchar](15) NOT NULL,
+
 	--SOD Fields
-	[SalesOrderDetailID]        [int] NOT NULL,
 	[ProductID]                 [int] NOT NULL,
 	[OrderQty]                  [smallint] NOT NULL,
 	[UnitPrice]                 [money] NOT NULL,
-	[UnitPriceDiscount]         [money] NOT NULL,
+	[UnitPriceDiscount]         [money] NOT NULL, 
 	[LineTotal]     AS isnull([UnitPrice]*(1.0-[UnitPriceDiscount])*[OrderQty], 0.0),
 	[LineTotalDue]  AS isnull(([UnitPrice]*(1.0-[UnitPriceDiscount])*[OrderQty])+[AllocatedTaxAmt]+[AllocatedFreight], 0.0),
-	CONSTRAINT [PK_FactSalesOrders] PRIMARY KEY CLUSTERED ([SalesOrderID],[SalesOrderDetailID])
+
+	CONSTRAINT [PK_FactSalesOrders] PRIMARY KEY CLUSTERED ([SalesOrderID],[SalesOrderDetailID]),
+  CONSTRAINT [FK_CustomerSK] FOREIGN KEY (customerSK) REFERENCES presentation.CustomersHistory(SurrogateKey),
+  CONSTRAINT [FK_ProductSK] FOREIGN KEY (productSK) REFERENCES presentation.ProductsHistory(SurrogateKey)
 );
 GO
 

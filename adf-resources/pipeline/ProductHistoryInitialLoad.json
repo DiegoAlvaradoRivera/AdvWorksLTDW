@@ -1,200 +1,726 @@
 {
-    "name": "ProductHistoryInitialLoad",
-    "properties": {
-        "activities": [
-            {
-                "name": "Stage Initial CT File",
-                "type": "Copy",
-                "dependsOn": [
-                    {
-                        "activity": "Set CT File Name",
-                        "dependencyConditions": [
-                            "Succeeded"
-                        ]
-                    }
-                ],
-                "policy": {
-                    "timeout": "0.12:00:00",
-                    "retry": 0,
-                    "retryIntervalInSeconds": 30,
-                    "secureOutput": false,
-                    "secureInput": false
-                },
-                "userProperties": [],
-                "typeProperties": {
-                    "source": {
-                        "type": "AzureSqlSource",
-                        "sqlReaderQuery": "SELECT \nCHANGE_TRACKING_CURRENT_VERSION() as ct_current_version, \nintegration.EasternTime() as extraction_time,\nProductID as ct_key, \n'I' as ct_operation,\nSellStartDate as ct_insertion_time,\nNULL as ct_last_mod_time,\n*\nFROM integration.Product",
-                        "queryTimeout": "00:05:00",
-                        "partitionOption": "None"
-                    },
-                    "sink": {
-                        "type": "ParquetSink",
-                        "storeSettings": {
-                            "type": "AzureBlobFSWriteSettings"
-                        },
-                        "formatSettings": {
-                            "type": "ParquetWriteSettings"
-                        }
-                    },
-                    "enableStaging": false,
-                    "parallelCopies": 1,
-                    "dataIntegrationUnits": 2,
-                    "translator": {
-                        "type": "TabularTranslator",
-                        "typeConversion": true,
-                        "typeConversionSettings": {
-                            "allowDataTruncation": true,
-                            "treatBooleanAsNumber": false
-                        }
-                    }
-                },
-                "inputs": [
-                    {
-                        "referenceName": "AdvWorksLTQuery",
-                        "type": "DatasetReference"
-                    }
-                ],
-                "outputs": [
-                    {
-                        "referenceName": "ProductCTFile",
-                        "type": "DatasetReference",
-                        "parameters": {
-                            "file": {
-                                "value": "@variables('temporal_file_name')",
-                                "type": "Expression"
-                            }
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "Set CT File Name",
-                "type": "SetVariable",
-                "dependsOn": [],
-                "userProperties": [],
-                "typeProperties": {
-                    "variableName": "temporal_file_name",
-                    "value": {
-                        "value": "@concat(\n    'temporal-', \n    pipeline().RunId,\n    '.parquet'\n)",
-                        "type": "Expression"
-                    }
-                }
-            },
-            {
-                "name": "Load Initial CT File",
-                "type": "Copy",
-                "dependsOn": [
-                    {
-                        "activity": "Stage Initial CT File",
-                        "dependencyConditions": [
-                            "Succeeded"
-                        ]
-                    }
-                ],
-                "policy": {
-                    "timeout": "0.12:00:00",
-                    "retry": 0,
-                    "retryIntervalInSeconds": 30,
-                    "secureOutput": false,
-                    "secureInput": false
-                },
-                "userProperties": [],
-                "typeProperties": {
-                    "source": {
-                        "type": "ParquetSource",
-                        "storeSettings": {
-                            "type": "AzureBlobFSReadSettings",
-                            "recursive": true,
-                            "enablePartitionDiscovery": false
-                        }
-                    },
-                    "sink": {
-                        "type": "AzureSqlSink",
-                        "preCopyScript": "TRUNCATE TABLE integration.ProductCTChangesStagging",
-                        "writeBehavior": "insert",
-                        "sqlWriterUseTableLock": false,
-                        "disableMetricsCollection": false
-                    },
-                    "enableStaging": false,
-                    "translator": {
-                        "type": "TabularTranslator",
-                        "typeConversion": true,
-                        "typeConversionSettings": {
-                            "allowDataTruncation": true,
-                            "treatBooleanAsNumber": false
-                        }
-                    }
-                },
-                "inputs": [
-                    {
-                        "referenceName": "ProductCTFile",
-                        "type": "DatasetReference",
-                        "parameters": {
-                            "file": {
-                                "value": "@variables('temporal_file_name')",
-                                "type": "Expression"
-                            }
-                        }
-                    }
-                ],
-                "outputs": [
-                    {
-                        "referenceName": "ProductCTChangesStagging",
-                        "type": "DatasetReference"
-                    }
-                ]
-            },
-            {
-                "name": "Run SP ProductHistoryIncrementalLoad",
-                "type": "SqlServerStoredProcedure",
-                "dependsOn": [
-                    {
-                        "activity": "Load Initial CT File",
-                        "dependencyConditions": [
-                            "Succeeded"
-                        ]
-                    }
-                ],
-                "policy": {
-                    "timeout": "0.12:00:00",
-                    "retry": 0,
-                    "retryIntervalInSeconds": 30,
-                    "secureOutput": false,
-                    "secureInput": false
-                },
-                "userProperties": [],
-                "typeProperties": {
-                    "storedProcedureName": "integration.ProductHistoryIncrementalLoad",
-                    "storedProcedureParameters": {
-                        "pipeline_run_id": {
-                            "value": {
-                                "value": "@pipeline().RunId",
-                                "type": "Expression"
-                            },
-                            "type": "String"
-                        }
-                    }
-                },
-                "linkedServiceName": {
-                    "referenceName": "AdvWorksLT_SQLDB_LS",
-                    "type": "LinkedServiceReference"
-                }
-            }
-        ],
-        "parameters": {
-            "pipeline_name": {
-                "type": "string",
-                "defaultValue": "product_sync"
-            }
-        },
-        "variables": {
-            "temporal_file_name": {
-                "type": "String"
-            }
-        },
-        "annotations": [],
-        "lastPublishTime": "2023-01-08T22:05:13Z"
-    },
-    "type": "Microsoft.DataFactory/factories/pipelines"
+	"name": "ProductHistoryInitialLoad",
+	"properties": {
+		"activities": [
+			{
+				"name": "Stage Initial CT File",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Set CT File Name",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": "SELECT \nCHANGE_TRACKING_CURRENT_VERSION() as ct_current_version, \nintegration.EasternTime() as extraction_time,\nProductID as ct_key, \n'I' as ct_operation,\nSellStartDate as ct_insertion_time,\nCONVERT(DATETIME, NULL) as ct_last_mod_time,\n*\nFROM integration.Product",
+						"queryTimeout": "00:05:00",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"parallelCopies": 1,
+					"dataIntegrationUnits": 2,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "ct_current_version",
+									"type": "Int64",
+									"physicalType": "bigint"
+								},
+								"sink": {
+									"name": "ct_current_version",
+									"type": "Int64",
+									"physicalType": "INT_64"
+								}
+							},
+							{
+								"source": {
+									"name": "extraction_time",
+									"type": "DateTime",
+									"physicalType": "datetime"
+								},
+								"sink": {
+									"name": "extraction_time",
+									"type": "DateTime",
+									"physicalType": "INT_96"
+								}
+							},
+							{
+								"source": {
+									"name": "ct_key",
+									"type": "Int32",
+									"physicalType": "int"
+								},
+								"sink": {
+									"name": "ct_key",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "ct_operation",
+									"type": "String",
+									"physicalType": "varchar"
+								},
+								"sink": {
+									"name": "ct_operation",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ct_insertion_time",
+									"type": "DateTime",
+									"physicalType": "datetime"
+								},
+								"sink": {
+									"name": "ct_insertion_time",
+									"type": "DateTime",
+									"physicalType": "INT_96"
+								}
+							},
+							{
+								"source": {
+									"name": "ct_last_mod_time",
+									"type": "DateTime",
+									"physicalType": "datetime"
+								},
+								"sink": {
+									"name": "ct_last_mod_time",
+									"type": "DateTime",
+									"physicalType": "INT_96"
+								}
+							},
+							{
+								"source": {
+									"name": "ProductID",
+									"type": "Int32",
+									"physicalType": "int"
+								},
+								"sink": {
+									"name": "ProductID",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "Name",
+									"type": "String",
+									"physicalType": "nvarchar"
+								},
+								"sink": {
+									"name": "Name",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ProductNumber",
+									"type": "String",
+									"physicalType": "nvarchar"
+								},
+								"sink": {
+									"name": "ProductNumber",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "Color",
+									"type": "String",
+									"physicalType": "nvarchar"
+								},
+								"sink": {
+									"name": "Color",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "StandardCost",
+									"type": "Decimal",
+									"physicalType": "money",
+									"scale": 4,
+									"precision": 19
+								},
+								"sink": {
+									"name": "StandardCost",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "ListPrice",
+									"type": "Decimal",
+									"physicalType": "money",
+									"scale": 4,
+									"precision": 19
+								},
+								"sink": {
+									"name": "ListPrice",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "Size",
+									"type": "String",
+									"physicalType": "nvarchar"
+								},
+								"sink": {
+									"name": "Size",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "Weight",
+									"type": "Decimal",
+									"physicalType": "decimal",
+									"scale": 2,
+									"precision": 8
+								},
+								"sink": {
+									"name": "Weight",
+									"type": "Decimal",
+									"physicalType": "DECIMAL"
+								}
+							},
+							{
+								"source": {
+									"name": "SellStartDate",
+									"type": "DateTime",
+									"physicalType": "datetime"
+								},
+								"sink": {
+									"name": "SellStartDate",
+									"type": "DateTime",
+									"physicalType": "INT_96"
+								}
+							},
+							{
+								"source": {
+									"name": "SellEndDate",
+									"type": "DateTime",
+									"physicalType": "datetime"
+								},
+								"sink": {
+									"name": "SellEndDate",
+									"type": "DateTime",
+									"physicalType": "INT_96"
+								}
+							},
+							{
+								"source": {
+									"name": "DiscontinuedDate",
+									"type": "DateTime",
+									"physicalType": "datetime"
+								},
+								"sink": {
+									"name": "DiscontinuedDate",
+									"type": "DateTime",
+									"physicalType": "INT_96"
+								}
+							},
+							{
+								"source": {
+									"name": "ProductModel",
+									"type": "String",
+									"physicalType": "nvarchar"
+								},
+								"sink": {
+									"name": "ProductModel",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ProductModelDescription",
+									"type": "String",
+									"physicalType": "nvarchar"
+								},
+								"sink": {
+									"name": "ProductModelDescription",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ProductSubcategory",
+									"type": "String",
+									"physicalType": "nvarchar"
+								},
+								"sink": {
+									"name": "ProductSubcategory",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "ProductCategory",
+									"type": "String",
+									"physicalType": "nvarchar"
+								},
+								"sink": {
+									"name": "ProductCategory",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "AdvWorksLTQuery",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ProductCTFile",
+						"type": "DatasetReference",
+						"parameters": {
+							"file": {
+								"value": "@variables('temporal_file_name')",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "Set CT File Name",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "temporal_file_name",
+					"value": {
+						"value": "@concat(\n    'temporal-', \n    pipeline().RunId,\n    '.parquet'\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Load Initial CT File",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Stage Initial CT File",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "ParquetSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						}
+					},
+					"sink": {
+						"type": "AzureSqlSink",
+						"preCopyScript": "TRUNCATE TABLE stagging.ProductCTChangesStagging",
+						"writeBehavior": "insert",
+						"sqlWriterUseTableLock": false,
+						"disableMetricsCollection": false
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "ct_current_version",
+									"type": "Int64",
+									"physicalType": "INT64"
+								},
+								"sink": {
+									"name": "ct_current_version",
+									"type": "Int32",
+									"physicalType": "int"
+								}
+							},
+							{
+								"source": {
+									"name": "extraction_time",
+									"type": "DateTime",
+									"physicalType": "INT96"
+								},
+								"sink": {
+									"name": "extraction_time",
+									"type": "DateTime",
+									"physicalType": "datetime"
+								}
+							},
+							{
+								"source": {
+									"name": "ct_key",
+									"type": "Int32",
+									"physicalType": "INT32"
+								},
+								"sink": {
+									"name": "ct_key",
+									"type": "Int32",
+									"physicalType": "int"
+								}
+							},
+							{
+								"source": {
+									"name": "ct_operation",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "ct_operation",
+									"type": "String",
+									"physicalType": "char"
+								}
+							},
+							{
+								"source": {
+									"name": "ct_insertion_time",
+									"type": "DateTime",
+									"physicalType": "INT96"
+								},
+								"sink": {
+									"name": "ct_insertion_time",
+									"type": "DateTime",
+									"physicalType": "datetime"
+								}
+							},
+							{
+								"source": {
+									"name": "ct_last_mod_time",
+									"type": "DateTime",
+									"physicalType": "INT96"
+								},
+								"sink": {
+									"name": "ct_last_mod_time",
+									"type": "DateTime",
+									"physicalType": "datetime"
+								}
+							},
+							{
+								"source": {
+									"name": "ProductID",
+									"type": "Int32",
+									"physicalType": "INT32"
+								},
+								"sink": {
+									"name": "ProductID",
+									"type": "Int32",
+									"physicalType": "int"
+								}
+							},
+							{
+								"source": {
+									"name": "Name",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "Name",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ProductNumber",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "ProductNumber",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "Color",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "Color",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "StandardCost",
+									"type": "Decimal",
+									"physicalType": "DECIMAL",
+									"scale": 4,
+									"precision": 19
+								},
+								"sink": {
+									"name": "StandardCost",
+									"type": "Decimal",
+									"physicalType": "money",
+									"scale": 4,
+									"precision": 19
+								}
+							},
+							{
+								"source": {
+									"name": "ListPrice",
+									"type": "Decimal",
+									"physicalType": "DECIMAL",
+									"scale": 4,
+									"precision": 19
+								},
+								"sink": {
+									"name": "ListPrice",
+									"type": "Decimal",
+									"physicalType": "money",
+									"scale": 4,
+									"precision": 19
+								}
+							},
+							{
+								"source": {
+									"name": "Size",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "Size",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "Weight",
+									"type": "Decimal",
+									"physicalType": "DECIMAL",
+									"scale": 2,
+									"precision": 8
+								},
+								"sink": {
+									"name": "Weight",
+									"type": "Decimal",
+									"physicalType": "decimal",
+									"scale": 2,
+									"precision": 8
+								}
+							},
+							{
+								"source": {
+									"name": "SellStartDate",
+									"type": "DateTime",
+									"physicalType": "INT96"
+								},
+								"sink": {
+									"name": "SellStartDate",
+									"type": "DateTime",
+									"physicalType": "datetime"
+								}
+							},
+							{
+								"source": {
+									"name": "SellEndDate",
+									"type": "DateTime",
+									"physicalType": "INT96"
+								},
+								"sink": {
+									"name": "SellEndDate",
+									"type": "DateTime",
+									"physicalType": "datetime"
+								}
+							},
+							{
+								"source": {
+									"name": "DiscontinuedDate",
+									"type": "DateTime",
+									"physicalType": "INT96"
+								},
+								"sink": {
+									"name": "DiscontinuedDate",
+									"type": "DateTime",
+									"physicalType": "datetime"
+								}
+							},
+							{
+								"source": {
+									"name": "ProductModel",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "ProductModel",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ProductModelDescription",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "ProductModelDescription",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ProductSubcategory",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "ProductSubcategory",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							},
+							{
+								"source": {
+									"name": "ProductCategory",
+									"type": "String",
+									"physicalType": "UTF8"
+								},
+								"sink": {
+									"name": "ProductCategory",
+									"type": "String",
+									"physicalType": "nvarchar"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ProductCTFile",
+						"type": "DatasetReference",
+						"parameters": {
+							"file": {
+								"value": "@variables('temporal_file_name')",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ProductCTChangesStagging",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "Run SP SP_ProductHistoryIncrementalLoad",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "Load Initial CT File",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[stagging].[SP_ProductHistoryIncrementalLoad]",
+					"storedProcedureParameters": {
+						"pipeline_run_id": {
+							"value": {
+								"value": "@pipeline().RunId",
+								"type": "Expression"
+							},
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "AdvWorksLT_SQLDB_LS",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"parameters": {
+			"pipeline_name": {
+				"type": "string",
+				"defaultValue": "product_sync"
+			}
+		},
+		"variables": {
+			"temporal_file_name": {
+				"type": "String"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-01-09T17:55:25Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
 }

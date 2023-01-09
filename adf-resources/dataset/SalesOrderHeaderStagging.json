@@ -1,5 +1,5 @@
 {
-	"name": "CustomerCTChangesStagging",
+	"name": "SalesOrderHeaderStagging",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "AdvWorksLT_SQLDB_LS",
@@ -12,36 +12,9 @@
 		"type": "AzureSqlTable",
 		"schema": [
 			{
-				"name": "ct_current_version",
+				"name": "SalesOrderID",
 				"type": "int",
 				"precision": 10
-			},
-			{
-				"name": "extraction_time",
-				"type": "datetime",
-				"precision": 23,
-				"scale": 3
-			},
-			{
-				"name": "ct_key",
-				"type": "int",
-				"precision": 10
-			},
-			{
-				"name": "ct_operation",
-				"type": "char"
-			},
-			{
-				"name": "ct_insertion_time",
-				"type": "datetime",
-				"precision": 23,
-				"scale": 3
-			},
-			{
-				"name": "ct_last_mod_time",
-				"type": "datetime",
-				"precision": 23,
-				"scale": 3
 			},
 			{
 				"name": "CustomerID",
@@ -49,73 +22,102 @@
 				"precision": 10
 			},
 			{
-				"name": "NameStyle",
+				"name": "OrderDate",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			},
+			{
+				"name": "DueDate",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			},
+			{
+				"name": "ShipDate",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			},
+			{
+				"name": "Status",
+				"type": "tinyint",
+				"precision": 3
+			},
+			{
+				"name": "OnlineOrderFlag",
 				"type": "bit"
 			},
 			{
-				"name": "Title",
+				"name": "SalesOrderNumber",
 				"type": "nvarchar"
 			},
 			{
-				"name": "FirstName",
+				"name": "PurchaseOrderNumber",
 				"type": "nvarchar"
 			},
 			{
-				"name": "MiddleName",
+				"name": "AccountNumber",
 				"type": "nvarchar"
 			},
 			{
-				"name": "LastName",
+				"name": "ShipMethod",
 				"type": "nvarchar"
 			},
 			{
-				"name": "Suffix",
+				"name": "CreditCardApprovalCode",
+				"type": "varchar"
+			},
+			{
+				"name": "TaxAmt",
+				"type": "money",
+				"precision": 19,
+				"scale": 4
+			},
+			{
+				"name": "Freight",
+				"type": "money",
+				"precision": 19,
+				"scale": 4
+			},
+			{
+				"name": "Subtotal",
+				"type": "money",
+				"precision": 19,
+				"scale": 4
+			},
+			{
+				"name": "Comment",
 				"type": "nvarchar"
 			},
 			{
-				"name": "CompanyName",
+				"name": "ShippingAddressLine1",
 				"type": "nvarchar"
 			},
 			{
-				"name": "SalesPerson",
+				"name": "ShippingAddressLine2",
 				"type": "nvarchar"
 			},
 			{
-				"name": "EmailAddress",
+				"name": "ShippingCity",
 				"type": "nvarchar"
 			},
 			{
-				"name": "Phone",
+				"name": "ShippingStateProvince",
 				"type": "nvarchar"
 			},
 			{
-				"name": "MainOfficeAddressLine1",
+				"name": "ShippingCountryRegion",
 				"type": "nvarchar"
 			},
 			{
-				"name": "MainOfficeAddressLine2",
-				"type": "nvarchar"
-			},
-			{
-				"name": "MainOfficeCity",
-				"type": "nvarchar"
-			},
-			{
-				"name": "MainOfficeStateProvince",
-				"type": "nvarchar"
-			},
-			{
-				"name": "MainOfficeCountryRegion",
-				"type": "nvarchar"
-			},
-			{
-				"name": "MainOfficePostalCode",
+				"name": "ShippingPostalCode",
 				"type": "nvarchar"
 			}
 		],
 		"typeProperties": {
 			"schema": "stagging",
-			"table": "CustomerCTChangesStagging"
+			"table": "SalesOrderHeaderStagging"
 		}
 	},
 	"type": "Microsoft.DataFactory/factories/datasets"

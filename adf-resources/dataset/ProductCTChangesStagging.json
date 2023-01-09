@@ -1,19 +1,126 @@
 {
-    "name": "ProductCTChangesStagging",
-    "properties": {
-        "linkedServiceName": {
-            "referenceName": "AdvWorksLT_SQLDB_LS",
-            "type": "LinkedServiceReference"
-        },
-        "folder": {
-            "name": "Integration"
-        },
-        "annotations": [],
-        "type": "AzureSqlTable",
-        "schema": [],
-        "typeProperties": {
-            "schema": "integration",
-            "table": "ProductCTChangesStagging"
-        }
-    }
+	"name": "ProductCTChangesStagging",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AdvWorksLT_SQLDB_LS",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "Stagging"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "ct_current_version",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "extraction_time",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			},
+			{
+				"name": "ct_key",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "ct_operation",
+				"type": "char"
+			},
+			{
+				"name": "ct_insertion_time",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			},
+			{
+				"name": "ct_last_mod_time",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			},
+			{
+				"name": "ProductID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "Name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ProductNumber",
+				"type": "nvarchar"
+			},
+			{
+				"name": "Color",
+				"type": "nvarchar"
+			},
+			{
+				"name": "StandardCost",
+				"type": "money",
+				"precision": 19,
+				"scale": 4
+			},
+			{
+				"name": "ListPrice",
+				"type": "money",
+				"precision": 19,
+				"scale": 4
+			},
+			{
+				"name": "Size",
+				"type": "nvarchar"
+			},
+			{
+				"name": "Weight",
+				"type": "decimal",
+				"precision": 8,
+				"scale": 2
+			},
+			{
+				"name": "SellStartDate",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			},
+			{
+				"name": "SellEndDate",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			},
+			{
+				"name": "DiscontinuedDate",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			},
+			{
+				"name": "ProductModel",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ProductModelDescription",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ProductSubcategory",
+				"type": "nvarchar"
+			},
+			{
+				"name": "ProductCategory",
+				"type": "nvarchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "stagging",
+			"table": "ProductCTChangesStagging"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
 }

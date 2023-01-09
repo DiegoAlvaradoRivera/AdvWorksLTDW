@@ -5,7 +5,7 @@
 		"annotations": [],
 		"type": "AzureBlobFS",
 		"typeProperties": {
-			"url": "https://demorg1dls.dfs.core.windows.net/",
+			"url": "https://rgawltdw1210628233rgdls.dfs.core.windows.net/",
 			"accountKey": {
 				"type": "AzureKeyVaultSecret",
 				"store": {
@@ -14,10 +14,6 @@
 				},
 				"secretName": "advworkslt-adls-ak"
 			}
-		},
-		"connectVia": {
-			"referenceName": "DefaultIR",
-			"type": "IntegrationRuntimeReference"
 		}
 	}
 }

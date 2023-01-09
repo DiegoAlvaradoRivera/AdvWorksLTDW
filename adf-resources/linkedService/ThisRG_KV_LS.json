@@ -5,7 +5,7 @@
 		"annotations": [],
 		"type": "AzureKeyVault",
 		"typeProperties": {
-			"baseUrl": "https://demorg1-kv3.vault.azure.net/"
+			"baseUrl": "https://rgawltdw1210628233rg-kv.vault.azure.net/"
 		}
 	}
 }

@@ -129,7 +129,7 @@
                 "typeProperties": {
                     "source": {
                         "type": "AzureSqlSource",
-                        "sqlReaderStoredProcedureName": "[stagging].[SP_GetJobtLastExecution]",
+                        "sqlReaderStoredProcedureName": "[staging].[SP_GetJobtLastExecution]",
                         "storedProcedureParameters": {
                             "pipeline_name": {
                                 "type": "String",
@@ -202,7 +202,7 @@
                                 },
                                 "sink": {
                                     "type": "AzureSqlSink",
-                                    "preCopyScript": "TRUNCATE TABLE stagging.ProductCTChangesStagging;",
+                                    "preCopyScript": "TRUNCATE TABLE staging.ProductCTChangesStaging;",
                                     "writeBehavior": "insert",
                                     "sqlWriterUseTableLock": false,
                                     "disableMetricsCollection": false
@@ -497,7 +497,7 @@
                             ],
                             "outputs": [
                                 {
-                                    "referenceName": "ProductCTChangesStagging",
+                                    "referenceName": "ProductCTChangesStaging",
                                     "type": "DatasetReference"
                                 }
                             ]
@@ -522,7 +522,7 @@
                             },
                             "userProperties": [],
                             "typeProperties": {
-                                "storedProcedureName": "[stagging].[SP_ProductHistoryIncrementalLoad]",
+                                "storedProcedureName": "[staging].[SP_ProductHistoryIncrementalLoad]",
                                 "storedProcedureParameters": {
                                     "pipeline_run_id": {
                                         "value": {
@@ -553,7 +553,7 @@
                             },
                             "userProperties": [],
                             "typeProperties": {
-                                "storedProcedureName": "[stagging].[SP_LogJobRun]",
+                                "storedProcedureName": "[staging].[SP_LogJobRun]",
                                 "storedProcedureParameters": {
                                     "pipeline_name": {
                                         "value": {

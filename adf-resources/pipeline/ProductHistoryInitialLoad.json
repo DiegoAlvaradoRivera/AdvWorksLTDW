@@ -371,7 +371,7 @@
                     },
                     "sink": {
                         "type": "AzureSqlSink",
-                        "preCopyScript": "TRUNCATE TABLE stagging.ProductCTChangesStagging",
+                        "preCopyScript": "TRUNCATE TABLE staging.ProductCTChangesStaging",
                         "writeBehavior": "insert",
                         "sqlWriterUseTableLock": false,
                         "disableMetricsCollection": false
@@ -666,7 +666,7 @@
                 ],
                 "outputs": [
                     {
-                        "referenceName": "ProductCTChangesStagging",
+                        "referenceName": "ProductCTChangesStaging",
                         "type": "DatasetReference"
                     }
                 ]
@@ -691,7 +691,7 @@
                 },
                 "userProperties": [],
                 "typeProperties": {
-                    "storedProcedureName": "[stagging].[SP_ProductHistoryIncrementalLoad]",
+                    "storedProcedureName": "[staging].[SP_ProductHistoryIncrementalLoad]",
                     "storedProcedureParameters": {
                         "pipeline_run_id": {
                             "value": {

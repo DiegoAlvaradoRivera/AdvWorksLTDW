@@ -23,7 +23,7 @@
 					"type": "Expression"
 				},
 				"folderPath": "SOH/files",
-				"fileSystem": "stagging"
+				"fileSystem": "staging"
 			},
 			"compressionCodec": "snappy"
 		},

@@ -277,7 +277,7 @@
                                 },
                                 "sink": {
                                     "type": "AzureSqlSink",
-                                    "preCopyScript": "TRUNCATE TABLE stagging.SalesOrderHeaderStagging",
+                                    "preCopyScript": "TRUNCATE TABLE staging.SalesOrderHeaderStaging",
                                     "writeBehavior": "insert",
                                     "sqlWriterUseTableLock": false,
                                     "disableMetricsCollection": false
@@ -306,7 +306,7 @@
                             ],
                             "outputs": [
                                 {
-                                    "referenceName": "SalesOrderHeaderStagging",
+                                    "referenceName": "SalesOrderHeaderStaging",
                                     "type": "DatasetReference"
                                 }
                             ]
@@ -334,7 +334,7 @@
                                 },
                                 "sink": {
                                     "type": "AzureSqlSink",
-                                    "preCopyScript": "TRUNCATE TABLE stagging.SalesOrderDetailStagging",
+                                    "preCopyScript": "TRUNCATE TABLE staging.SalesOrderDetailStaging",
                                     "writeBehavior": "insert",
                                     "sqlWriterUseTableLock": false,
                                     "disableMetricsCollection": false
@@ -363,7 +363,7 @@
                             ],
                             "outputs": [
                                 {
-                                    "referenceName": "SalesOrderDetailStagging",
+                                    "referenceName": "SalesOrderDetailStaging",
                                     "type": "DatasetReference"
                                 }
                             ]
@@ -394,7 +394,7 @@
                             },
                             "userProperties": [],
                             "typeProperties": {
-                                "storedProcedureName": "[stagging].[SP_FactSalesOrdersIncrementalLoad]",
+                                "storedProcedureName": "[staging].[SP_FactSalesOrdersIncrementalLoad]",
                                 "storedProcedureParameters": {
                                     "pipeline_run_id": {
                                         "value": {
@@ -425,7 +425,7 @@
                             },
                             "userProperties": [],
                             "typeProperties": {
-                                "storedProcedureName": "[stagging].[SP_LogJobRun]",
+                                "storedProcedureName": "[staging].[SP_LogJobRun]",
                                 "storedProcedureParameters": {
                                     "pipeline_name": {
                                         "value": {

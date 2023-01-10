@@ -1,12 +1,12 @@
 {
-	"name": "SalesOrderHeaderStagging",
+	"name": "SalesOrderHeaderStaging",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "AdvWorksLT_SQLDB_LS",
 			"type": "LinkedServiceReference"
 		},
 		"folder": {
-			"name": "Stagging"
+			"name": "Staging"
 		},
 		"annotations": [],
 		"type": "AzureSqlTable",
@@ -116,8 +116,8 @@
 			}
 		],
 		"typeProperties": {
-			"schema": "stagging",
-			"table": "SalesOrderHeaderStagging"
+			"schema": "staging",
+			"table": "SalesOrderHeaderStaging"
 		}
 	},
 	"type": "Microsoft.DataFactory/factories/datasets"

@@ -2,14 +2,14 @@
 set nocount on;
 go
 
-create schema stagging;
+create schema staging;
 go 
 
 /*
 Name: 	     JobLogs
 Description: table in which the job runs are logged
 */
-create table stagging.JobLogs(
+create table staging.JobLogs(
 	pipeline_name 		varchar(50)	NOT NULL,
 	pipeline_run_id     varchar(100) NOT NULL,
 	sync_ct_version 	int			NULL,
@@ -23,7 +23,7 @@ go
 Name: 	     SP_LogJobRun
 Description: SP to log a job run
 */
-create procedure stagging.SP_LogJobRun(
+create procedure staging.SP_LogJobRun(
 	@pipeline_name   varchar(50),
 	@pipeline_run_id varchar(100),
 	@sync_ct_version int,
@@ -31,7 +31,7 @@ create procedure stagging.SP_LogJobRun(
 )
 as
 begin 
-	insert into stagging.JobLogs
+	insert into staging.JobLogs
 	(pipeline_name,  pipeline_run_id,  sync_ct_version,  sync_timestamp)
 	values
 	(@pipeline_name, @pipeline_run_id, @sync_ct_version, @sync_timestamp)
@@ -43,14 +43,14 @@ Name: 	     SP_GetJobtLastExecution
 Description: SP to retrieve the metadata of the last execution of
     a job run.
 */
-create or alter procedure stagging.SP_GetJobtLastExecution(
+create or alter procedure staging.SP_GetJobtLastExecution(
 	@pipeline_name varchar(50)
 )
 as 
 begin
 
 	select top 1 *
-	from stagging.JobLogs
+	from staging.JobLogs
 	where pipeline_name = @pipeline_name
 	order by sync_timestamp desc
 
@@ -59,11 +59,11 @@ end;
 go
 
 /*
-Name: 	     CustomerCTChangesStagging
-Description: stagging table for the customer CT changes
+Name: 	     CustomerCTChangesStaging
+Description: staging table for the customer CT changes
 
 */
-create table stagging.CustomerCTChangesStagging(
+create table staging.CustomerCTChangesStaging(
 
 	ct_current_version          int NOT NULL,
 	extraction_time             datetime not null,
@@ -93,10 +93,10 @@ create table stagging.CustomerCTChangesStagging(
 go
 
 /*
-Name: 	     ProductCTChangesStagging
-Description: stagging table for the product CT changes
+Name: 	     ProductCTChangesStaging
+Description: staging table for the product CT changes
 */
-create table stagging.ProductCTChangesStagging(
+create table staging.ProductCTChangesStaging(
 
 	ct_current_version          int NOT NULL,
 	extraction_time             datetime not null,
@@ -124,10 +124,10 @@ create table stagging.ProductCTChangesStagging(
 go
 
 /*
-Name: 	     SalesOrderHeaderStagging
-Description: stagging table for SOH records
+Name: 	     SalesOrderHeaderStaging
+Description: staging table for SOH records
 */
-create table stagging.SalesOrderHeaderStagging(
+create table staging.SalesOrderHeaderStaging(
 
 	[SalesOrderID]              [int] UNIQUE NOT NULL,
     [CustomerID]                [int] NOT NULL,
@@ -158,10 +158,10 @@ create table stagging.SalesOrderHeaderStagging(
 go
 
 /*
-Name: 	     SalesOrderHeaderStagging
-Description: stagging table for SOD records
+Name: 	     SalesOrderHeaderStaging
+Description: staging table for SOD records
 */
-create table stagging.SalesOrderDetailStagging(
+create table staging.SalesOrderDetailStaging(
 
 	[SalesOrderDetailID]        [int] NOT NULL,
 
@@ -180,12 +180,12 @@ go
 
 /*
 Name: 	     SP_CustomerHistoryIncrementalLoad
-Description: SP that loads the records in the CustomerCTChangesStagging table into 
+Description: SP that loads the records in the CustomerCTChangesStaging table into 
     the CustomersHistory table. For inserted customers, a new row is created. 
     For modified customers, the current row is expired and a new one is created. 
     For customers that have been deleted, the current row is expired.
 */
-create or alter procedure stagging.SP_CustomerHistoryIncrementalLoad(
+create or alter procedure staging.SP_CustomerHistoryIncrementalLoad(
     @pipeline_run_id varchar(100)
 )
 as 
@@ -200,7 +200,7 @@ begin
     from 
     presentation.CustomersHistory as CH
     inner join 
-    stagging.CustomerCTChangesStagging as CT
+    staging.CustomerCTChangesStaging as CT
     on CH.CustomerID = CT.CustomerID and CH.RowCurrentFlag = 1 and CT.ct_operation in ('U', 'D');
 
     -- for entities that have been inserted or updated
@@ -216,7 +216,7 @@ begin
     IIF(ct_operation = 'I', ct_insertion_time, ct_last_mod_time) as RowEffectiveDate, 
     CONVERT(DATETIME, '9999-12-31') as RowExpirationDate, 
     1 as RowCurrentFlag
-    from stagging.CustomerCTChangesStagging 
+    from staging.CustomerCTChangesStaging 
     where ct_operation in ('I', 'U')
 
     -- log the job
@@ -226,28 +226,28 @@ begin
     select top 1 
         @ct_version = ct_current_version,
         @extraction_time = extraction_time
-    from stagging.CustomerCTChangesStagging
+    from staging.CustomerCTChangesStaging
 
-    exec stagging.SP_LogJobRun 
+    exec staging.SP_LogJobRun 
         @pipeline_name = 'customer_sync', 
         @pipeline_run_id = @pipeline_run_id,
         @sync_ct_version = @ct_version,
         @sync_timestamp = @extraction_time;
 
-    -- truncate the CustomerCTChangesStagging table
-    truncate table stagging.CustomerCTChangesStagging;
+    -- truncate the CustomerCTChangesStaging table
+    truncate table staging.CustomerCTChangesStaging;
 
 end;
 go
 
 /*
 Name: 	     SP_ProductHistoryIncrementalLoad
-Description: SP that loads the records in the ProductCTChangesStagging table into 
+Description: SP that loads the records in the ProductCTChangesStaging table into 
     the ProductsHistory table. For inserted products, a new row is created. 
     For modified products, the current row is expired and a new one is created. 
     For products that have been deleted, the current row is expired.
 */
-create or alter procedure stagging.SP_ProductHistoryIncrementalLoad(
+create or alter procedure staging.SP_ProductHistoryIncrementalLoad(
     @pipeline_run_id varchar(100)
 )
 as 
@@ -262,7 +262,7 @@ begin
     from 
     presentation.ProductsHistory as HT
     inner join 
-    stagging.ProductCTChangesStagging as CT
+    staging.ProductCTChangesStaging as CT
     on HT.ProductID = CT.ProductID and HT.RowCurrentFlag = 1 and CT.ct_operation in ('U', 'D');
 
     -- for entities that have been inserted or updated
@@ -278,7 +278,7 @@ begin
     IIF(ct_operation = 'I', ct_insertion_time, ct_last_mod_time)    as RowEffectiveDate, 
     CONVERT(DATETIME, '9999-12-31')                                 as RowExpirationDate, 
     1                                                               as RowCurrentFlag
-    from stagging.ProductCTChangesStagging 
+    from staging.ProductCTChangesStaging 
     where ct_operation in ('I', 'U');
 
     -- log the job run
@@ -288,24 +288,24 @@ begin
     select top 1 
         @ct_version = ct_current_version,
         @extraction_time = extraction_time
-    from stagging.ProductCTChangesStagging
+    from staging.ProductCTChangesStaging
 
-    exec stagging.SP_LogJobRun 
+    exec staging.SP_LogJobRun 
         @pipeline_name = 'product_sync', 
         @pipeline_run_id = @pipeline_run_id,
         @sync_ct_version = @ct_version,
         @sync_timestamp = @extraction_time;
 
-    -- truncate the ProductCTChangesStagging table
-    truncate table stagging.ProductCTChangesStagging;
+    -- truncate the ProductCTChangesStaging table
+    truncate table staging.ProductCTChangesStaging;
 
 end;
 go
 
 /*
 Name: 	     SP_ProductHistoryIncrementalLoad
-Description: SP that loads the records in the SalesOrderHeaderStagging and 
-    SalesOrderDetailStagging tables into the FactSalesOrders table. 
+Description: SP that loads the records in the SalesOrderHeaderStaging and 
+    SalesOrderDetailStaging tables into the FactSalesOrders table. 
 
     It applies the following transformations:
     - add a surrogate key to the CustomesrHistory table based on the OrderDate.
@@ -315,21 +315,21 @@ Description: SP that loads the records in the SalesOrderHeaderStagging and
     - allocates the header-level SOH.Freight column to the line level by 
         distributing it proportionally to the LineTotal.
 */
-create or alter procedure stagging.SP_FactSalesOrdersIncrementalLoad(
+create or alter procedure staging.SP_FactSalesOrdersIncrementalLoad(
     @pipeline_run_id varchar(100)
 )
 as 
 begin
 
-    -- transform the stagging files and load the facts
+    -- transform the staging files and load the facts
     insert into presentation.FactSalesOrders
     select 
 
         SOH.SalesOrderID as SalesOrderID, 
         SOD.SalesOrderDetailID as SalesOrderDetailID,
 
-        stagging.getCustomerSK(CustomerID, OrderDate) as CustomerSK,
-        stagging.getProductSK(ProductID, OrderDate) as ProductSK,
+        staging.getCustomerSK(CustomerID, OrderDate) as CustomerSK,
+        staging.getProductSK(ProductID, OrderDate) as ProductSK,
 
         OrderDate, DueDate, ShipDate, 
         CustomerID, Status, OnlineOrderFlag, SalesOrderNumber, 
@@ -346,23 +346,23 @@ begin
         ProductID, OrderQty, UnitPrice, UnitPriceDiscount
 
     from 
-    stagging.SalesOrderHeaderStagging as SOH 
+    staging.SalesOrderHeaderStaging as SOH 
     left join 
-    stagging.SalesOrderDetailStagging as SOD 
+    staging.SalesOrderDetailStaging as SOD 
     on SOH.SalesOrderID = SOD.SalesOrderID;
 
     -- log the job
     declare @extraction_time as datetime =  SYSDATETIMEOFFSET() at time zone N'Eastern Standard Time';
     
-    exec stagging.SP_LogJobRun 
+    exec staging.SP_LogJobRun 
         @pipeline_name = 'sales_orders_sync', 
         @pipeline_run_id = @pipeline_run_id,
         @sync_ct_version = NULL,
         @sync_timestamp = @extraction_time;
 
-    -- truncate the stagging tables
-    truncate table stagging.SalesOrderHeaderStagging;
-    truncate table stagging.SalesOrderDetailStagging;
+    -- truncate the staging tables
+    truncate table staging.SalesOrderHeaderStaging;
+    truncate table staging.SalesOrderDetailStaging;
 
 end; 
 go 
@@ -372,7 +372,7 @@ Name: 	     getCustomerSK
 Description: returns the surrogate key associated with a customer at 
     a point in time
 */
-create or alter function stagging.getCustomerSK(
+create or alter function staging.getCustomerSK(
     @customer_id int,
     @timetamp datetime
 )
@@ -393,7 +393,7 @@ Name: 	     getCustomerSK
 Description: returns the surrogate key associated with a product at 
     a point in time
 */
-create or alter function stagging.getProductSK(
+create or alter function staging.getProductSK(
     @product_id int,
     @timetamp datetime
 )
@@ -410,5 +410,5 @@ end;
 go
 
 
-print 'STAGGING SCHEMA CREATED SUCCESSFULLY';
+print 'STAGING SCHEMA CREATED SUCCESSFULLY';
 go 

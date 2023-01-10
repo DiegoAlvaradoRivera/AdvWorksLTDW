@@ -23,7 +23,7 @@
 					"type": "Expression"
 				},
 				"folderPath": "customer/ct_files",
-				"fileSystem": "stagging"
+				"fileSystem": "staging"
 			},
 			"compressionCodec": "snappy"
 		},

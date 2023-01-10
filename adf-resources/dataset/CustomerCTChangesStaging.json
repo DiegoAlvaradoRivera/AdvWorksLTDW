@@ -1,12 +1,12 @@
 {
-	"name": "ProductCTChangesStagging",
+	"name": "CustomerCTChangesStaging",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "AdvWorksLT_SQLDB_LS",
 			"type": "LinkedServiceReference"
 		},
 		"folder": {
-			"name": "Stagging"
+			"name": "Staging"
 		},
 		"annotations": [],
 		"type": "AzureSqlTable",
@@ -44,82 +44,78 @@
 				"scale": 3
 			},
 			{
-				"name": "ProductID",
+				"name": "CustomerID",
 				"type": "int",
 				"precision": 10
 			},
 			{
-				"name": "Name",
+				"name": "NameStyle",
+				"type": "bit"
+			},
+			{
+				"name": "Title",
 				"type": "nvarchar"
 			},
 			{
-				"name": "ProductNumber",
+				"name": "FirstName",
 				"type": "nvarchar"
 			},
 			{
-				"name": "Color",
+				"name": "MiddleName",
 				"type": "nvarchar"
 			},
 			{
-				"name": "StandardCost",
-				"type": "money",
-				"precision": 19,
-				"scale": 4
-			},
-			{
-				"name": "ListPrice",
-				"type": "money",
-				"precision": 19,
-				"scale": 4
-			},
-			{
-				"name": "Size",
+				"name": "LastName",
 				"type": "nvarchar"
 			},
 			{
-				"name": "Weight",
-				"type": "decimal",
-				"precision": 8,
-				"scale": 2
-			},
-			{
-				"name": "SellStartDate",
-				"type": "datetime",
-				"precision": 23,
-				"scale": 3
-			},
-			{
-				"name": "SellEndDate",
-				"type": "datetime",
-				"precision": 23,
-				"scale": 3
-			},
-			{
-				"name": "DiscontinuedDate",
-				"type": "datetime",
-				"precision": 23,
-				"scale": 3
-			},
-			{
-				"name": "ProductModel",
+				"name": "Suffix",
 				"type": "nvarchar"
 			},
 			{
-				"name": "ProductModelDescription",
+				"name": "CompanyName",
 				"type": "nvarchar"
 			},
 			{
-				"name": "ProductSubcategory",
+				"name": "SalesPerson",
 				"type": "nvarchar"
 			},
 			{
-				"name": "ProductCategory",
+				"name": "EmailAddress",
+				"type": "nvarchar"
+			},
+			{
+				"name": "Phone",
+				"type": "nvarchar"
+			},
+			{
+				"name": "MainOfficeAddressLine1",
+				"type": "nvarchar"
+			},
+			{
+				"name": "MainOfficeAddressLine2",
+				"type": "nvarchar"
+			},
+			{
+				"name": "MainOfficeCity",
+				"type": "nvarchar"
+			},
+			{
+				"name": "MainOfficeStateProvince",
+				"type": "nvarchar"
+			},
+			{
+				"name": "MainOfficeCountryRegion",
+				"type": "nvarchar"
+			},
+			{
+				"name": "MainOfficePostalCode",
 				"type": "nvarchar"
 			}
 		],
 		"typeProperties": {
-			"schema": "stagging",
-			"table": "ProductCTChangesStagging"
+			"schema": "staging",
+			"table": "CustomerCTChangesStaging"
 		}
 	},
 	"type": "Microsoft.DataFactory/factories/datasets"

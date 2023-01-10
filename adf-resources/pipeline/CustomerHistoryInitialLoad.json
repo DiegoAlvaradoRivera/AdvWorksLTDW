@@ -366,7 +366,7 @@
                 },
                 "userProperties": [],
                 "typeProperties": {
-                    "storedProcedureName": "[stagging].[SP_CustomerHistoryIncrementalLoad]",
+                    "storedProcedureName": "[staging].[SP_CustomerHistoryIncrementalLoad]",
                     "storedProcedureParameters": {
                         "pipeline_run_id": {
                             "value": {
@@ -425,7 +425,7 @@
                     },
                     "sink": {
                         "type": "AzureSqlSink",
-                        "preCopyScript": "TRUNCATE TABLE stagging.CustomerCTChangesStagging;",
+                        "preCopyScript": "TRUNCATE TABLE staging.CustomerCTChangesStaging;",
                         "writeBehavior": "insert",
                         "sqlWriterUseTableLock": false,
                         "disableMetricsCollection": false
@@ -732,7 +732,7 @@
                 ],
                 "outputs": [
                     {
-                        "referenceName": "CustomerCTChangesStagging",
+                        "referenceName": "CustomerCTChangesStaging",
                         "type": "DatasetReference"
                     }
                 ]

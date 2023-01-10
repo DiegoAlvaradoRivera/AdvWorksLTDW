@@ -2,7 +2,6 @@
 set nocount on; 
 go 
 
-
 /*
 Correct sales order header subtotals. According to the column description, 
 SalesOrderHeader.SubTotal is computed as SUM(SalesOrderDetail.LineTotal) 
@@ -24,7 +23,6 @@ on SOH.SalesOrderID = CS.SalesOrderID
 
 commit; 
 go
-
 
 /*
 Delete customers that have no placed orders
@@ -48,7 +46,6 @@ where CustomerID in (select CustomerID from @customers_without_sales);
 
 commit;
 go
-
 
 print 'SUCCESSFULLY MODIFIED DATABASE';
 go 

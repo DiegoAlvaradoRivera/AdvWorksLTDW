@@ -1,8 +1,6 @@
 
-
 set nocount on;
 go 
-
 
 /*
 TRANSACTION NUMBER 1
@@ -28,7 +26,6 @@ where SalesOrderID = @order_id;
 commit; 
 go 
 
-
 /*
 TRANSACTION NUMBER 2
 
@@ -52,7 +49,6 @@ where SalesOrderID = @order_id;
 
 commit;
 go 
-
 
 print 'SUCCESSFULLY COMPLETED OPERATIONS FOR DAY 2';
 go 

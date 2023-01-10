@@ -1,20 +1,4 @@
 
-
-/*
-
-DESCRIPTION
-This schema contains the tables, views and functions that support the DW 
-synchronization jobs
-
-
-TABLES
-- JobLogs: table that contains the logs of the ETL jobs
-
-STORED PROCEDURES
-- SP_LogJobRun: procedure to log a job run
-
-*/
-
 set nocount on;
 go
 
@@ -22,7 +6,7 @@ create schema stagging;
 go 
 
 /*
-Name: 	 JobLogs
+Name: 	     JobLogs
 Description: table in which the job runs are logged
 */
 create table stagging.JobLogs(
@@ -36,8 +20,8 @@ go
 
 
 /*
-Name: 	 SP_LogJobRun
-Description: procedure to log a job run
+Name: 	     SP_LogJobRun
+Description: SP to log a job run
 */
 create procedure stagging.SP_LogJobRun(
 	@pipeline_name   varchar(50),
@@ -55,7 +39,9 @@ end;
 go 
 
 /*
-TODO
+Name: 	     SP_GetJobtLastExecution
+Description: SP to retrieve the metadata of the last execution of
+    a job run.
 */
 create or alter procedure stagging.SP_GetJobtLastExecution(
 	@pipeline_name varchar(50)
@@ -72,44 +58,52 @@ begin
 end;
 go
 
+/*
+Name: 	     CustomerCTChangesStagging
+Description: stagging table for the customer CT changes
 
+*/
 create table stagging.CustomerCTChangesStagging(
 
-	ct_current_version int NOT NULL,
-	extraction_time datetime not null,
-	ct_key int not null, 
-	ct_operation CHAR(1) not null, 
-	ct_insertion_time datetime null,
-	ct_last_mod_time datetime null,
+	ct_current_version          int NOT NULL,
+	extraction_time             datetime not null,
+	ct_key                      int not null, 
+	ct_operation                char(1) not null, 
+	ct_insertion_time           datetime null,
+	ct_last_mod_time            datetime null,
 
-	[CustomerID] [int] UNIQUE NOT NULL,
-	[NameStyle] [bit] NOT NULL,
-	[Title] [nvarchar](8) NULL,
-	[FirstName] [nvarchar](50) NOT NULL,
-	[MiddleName] [nvarchar](50) NULL,
-	[LastName] [nvarchar](50) NOT NULL,
-	[Suffix] [nvarchar](10) NULL,
-	[CompanyName] [nvarchar](128) NULL,
-	[SalesPerson] [nvarchar](256) NULL,
-	[EmailAddress] [nvarchar](50) NULL,
+	[CustomerID]                [int] UNIQUE NOT NULL,
+	[NameStyle]                 [bit] NOT NULL,
+	[Title]                     [nvarchar](8) NULL,
+	[FirstName]                 [nvarchar](50) NOT NULL,
+	[MiddleName]                [nvarchar](50) NULL,
+	[LastName]                  [nvarchar](50) NOT NULL,
+	[Suffix]                    [nvarchar](10) NULL,
+	[CompanyName]               [nvarchar](128) NULL,
+	[SalesPerson]               [nvarchar](256) NULL,
+	[EmailAddress]              [nvarchar](50) NULL,
 	[Phone]                     [nvarchar](25) NULL,
 	[MainOfficeAddressLine1]    [nvarchar](60) NOT NULL,
 	[MainOfficeAddressLine2]    [nvarchar](60) NULL,
 	[MainOfficeCity]            [nvarchar](30) NOT NULL,
 	[MainOfficeStateProvince]   [nvarchar](50) NOT NULL,
 	[MainOfficeCountryRegion]   [nvarchar](50) NOT NULL,
-	[MainOfficePostalCode]      [nvarchar](15) NOT NULL,
+	[MainOfficePostalCode]      [nvarchar](15) NOT NULL
 );
 go
 
+/*
+Name: 	     ProductCTChangesStagging
+Description: stagging table for the product CT changes
+*/
 create table stagging.ProductCTChangesStagging(
 
-	ct_current_version int NOT NULL,
-	extraction_time datetime not null,
-	ct_key int not null, 
-	ct_operation CHAR(1) not null, 
-	ct_insertion_time datetime null,
-	ct_last_mod_time datetime null,
+	ct_current_version          int NOT NULL,
+	extraction_time             datetime not null,
+	ct_key                      int not null, 
+	ct_operation                char(1) not null, 
+	ct_insertion_time           datetime null,
+	ct_last_mod_time            datetime null,
 
 	[ProductID]                 [int] UNIQUE NOT NULL,
 	[Name]                      [nvarchar](50) NOT NULL,
@@ -129,13 +123,14 @@ create table stagging.ProductCTChangesStagging(
 );
 go
 
-
+/*
+Name: 	     SalesOrderHeaderStagging
+Description: stagging table for SOH records
+*/
 create table stagging.SalesOrderHeaderStagging(
 
 	[SalesOrderID]              [int] UNIQUE NOT NULL,
-
     [CustomerID]                [int] NOT NULL,
-
 	[OrderDate]                 [datetime] NOT NULL,
 	[DueDate]                   [datetime] NOT NULL,
 	[ShipDate]                  [datetime] NULL,
@@ -162,7 +157,10 @@ create table stagging.SalesOrderHeaderStagging(
 );
 go
 
-
+/*
+Name: 	     SalesOrderHeaderStagging
+Description: stagging table for SOD records
+*/
 create table stagging.SalesOrderDetailStagging(
 
 	[SalesOrderDetailID]        [int] NOT NULL,
@@ -180,13 +178,21 @@ create table stagging.SalesOrderDetailStagging(
 );
 go
 
+/*
+Name: 	     SP_CustomerHistoryIncrementalLoad
+Description: SP that loads the records in the CustomerCTChangesStagging table into 
+    the CustomersHistory table. For inserted customers, a new row is created. 
+    For modified customers, the current row is expired and a new one is created. 
+    For customers that have been deleted, the current row is expired.
+*/
 create or alter procedure stagging.SP_CustomerHistoryIncrementalLoad(
     @pipeline_run_id varchar(100)
 )
 as 
 begin
 
-    -- expire current rows that have been modified
+    -- for entities that have been updated or deleted
+    -- expire the current row
     update CH
     set 
     CH.RowExpirationDate = CT.ct_last_mod_time,
@@ -195,9 +201,10 @@ begin
     presentation.CustomersHistory as CH
     inner join 
     stagging.CustomerCTChangesStagging as CT
-    on CH.CustomerID = CT.CustomerID and CH.RowCurrentFlag = 1;
+    on CH.CustomerID = CT.CustomerID and CH.RowCurrentFlag = 1 and CT.ct_operation in ('U', 'D');
 
-    -- insert new rows
+    -- for entities that have been inserted or updated
+    -- insert a new row with the current data
     insert into presentation.CustomersHistory(
     CustomerID, NameStyle, Title, FirstName, MiddleName, LastName, Suffix, CompanyName, SalesPerson, EmailAddress, Phone, 
     MainOfficeAddressLine1, MainOfficeAddressLine2, MainOfficeCity, MainOfficeStateProvince, MainOfficeCountryRegion, MainOfficePostalCode,
@@ -229,17 +236,25 @@ begin
 
     -- truncate the CustomerCTChangesStagging table
     truncate table stagging.CustomerCTChangesStagging;
+
 end;
 go
 
-
+/*
+Name: 	     SP_ProductHistoryIncrementalLoad
+Description: SP that loads the records in the ProductCTChangesStagging table into 
+    the ProductsHistory table. For inserted products, a new row is created. 
+    For modified products, the current row is expired and a new one is created. 
+    For products that have been deleted, the current row is expired.
+*/
 create or alter procedure stagging.SP_ProductHistoryIncrementalLoad(
     @pipeline_run_id varchar(100)
 )
 as 
 begin
 
-    -- expire current rows that have been modified
+    -- for entities that have been updated or deleted
+    -- expire the current row
     update HT
     set 
     HT.RowExpirationDate = CT.ct_last_mod_time,
@@ -248,9 +263,10 @@ begin
     presentation.ProductsHistory as HT
     inner join 
     stagging.ProductCTChangesStagging as CT
-    on HT.ProductID = CT.ProductID and HT.RowCurrentFlag = 1;
+    on HT.ProductID = CT.ProductID and HT.RowCurrentFlag = 1 and CT.ct_operation in ('U', 'D');
 
-    -- insert new rows
+    -- for entities that have been inserted or updated
+    -- insert a new row with the current data
     insert into presentation.ProductsHistory(
     ProductID, Name, ProductNumber, Color, StandardCost, ListPrice, Size, Weight, SellStartDate, SellEndDate, 
     DiscontinuedDate, ProductModel, ProductModelDescription, ProductSubcategory, ProductCategory,
@@ -287,7 +303,17 @@ end;
 go
 
 /*
-TODO
+Name: 	     SP_ProductHistoryIncrementalLoad
+Description: SP that loads the records in the SalesOrderHeaderStagging and 
+    SalesOrderDetailStagging tables into the FactSalesOrders table. 
+
+    It applies the following transformations:
+    - add a surrogate key to the CustomesrHistory table based on the OrderDate.
+    - add a surrogate key to the ProductsHistory table based on the OrderDate.
+    - allocates the header-level SOH.TaxAmt column to the line level by 
+        distributing it proportionally to the LineTotal.
+    - allocates the header-level SOH.Freight column to the line level by 
+        distributing it proportionally to the LineTotal.
 */
 create or alter procedure stagging.SP_FactSalesOrdersIncrementalLoad(
     @pipeline_run_id varchar(100)
@@ -342,7 +368,9 @@ end;
 go 
 
 /*
-TODO
+Name: 	     getCustomerSK
+Description: returns the surrogate key associated with a customer at 
+    a point in time
 */
 create or alter function stagging.getCustomerSK(
     @customer_id int,
@@ -361,7 +389,9 @@ end;
 go
 
 /*
-TODO
+Name: 	     getCustomerSK
+Description: returns the surrogate key associated with a product at 
+    a point in time
 */
 create or alter function stagging.getProductSK(
     @product_id int,

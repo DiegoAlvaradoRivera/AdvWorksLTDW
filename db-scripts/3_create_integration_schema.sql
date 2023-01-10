@@ -1,57 +1,12 @@
 
-/*
-
-DESCRIPTION
-This schema contains the tables, views and functions that support the DW 
-synchronization jobs
-
-
-FUNCTIONS
-- EasternTime: returns the current datetime at eastern time (UTC -5)
-- CTCreationVersionAtEasternTime: returns the creation datetime of a change 
-	tracking version at eastern time (UTC -5)
-- CustomerCTUpdates: returns the customer CT metadata and the current 
-	customer data since the last seen ct version
-- ProductCTUupdates: returns the product CT metadata and the current 
-	product data since the last seen ct version
-- NumberOfChangedColumnInTable: function that return the number of columns that have changed @sys_change_columns
-	in the @sourceSchema.@sourceTable table tracked by @targetTable 
-
-
-VIEWS
-- Customer: denormalized view of a the customer data
-- CustomerKeyCombinations: contains all the existing combinations 
-	of CustomerID and AddressID (for the Main Office)
-
-- ProductCategory: denormalized view of the product category data
-- ProductView: denormalized view of the product data
-- ProductKeysCombinations: contains all the existing combinations 
-	of ProductID, ProductSubcategoryID, ProductCategoryID and ProductModelID
-
-- SalesOrderHeader: view of the sales order header data
-- SalesOrderDetailView view of the sales order detail data
-
-
-TABLES
-- TargetSourceMappings: table the contains the columns tracked by the dimensions.
-	This table is used to filter the change tracking rows.
-- SalesOrdersToExtract: table that contains the SalesOrderIDs of the 
-	sales orders that have reached a final state and are going to be 
-	extracted.
-
-*/
-
-
 set nocount on;
 go
-
 
 create schema integration;
 go
 
-
 /*
-Name: 	     integration.EasternTime
+Name: 	     EasternTime
 Description: returns the current datetime at eastern time (UTC -5)
 */
 create or alter function integration.EasternTime(
@@ -64,9 +19,8 @@ begin
 end;
 go
 
-
 /*
-Name: 	     integration.CTCreationVersionAtEasternTime
+Name: 	     CTCreationVersionAtEasternTime
 Description: returns the creation datetime of a change tracking version 
 	at UTC -5 (Lima/Perú)
 */
@@ -77,10 +31,9 @@ as
 begin
     declare @result as datetime;
     
-	-- retornar la hora de creación en UTC -5 (Lima/Peru)
 	select @result = convert(
 			datetime, 
-			(commit_time AT TIME ZONE N'UTC') AT TIME ZONE N'Eastern Standard Time' -- ¿?
+			(commit_time AT TIME ZONE N'UTC') AT TIME ZONE N'Eastern Standard Time' 
 			) 
 	from sys.dm_tran_commit_table 
     where commit_ts = @version_number;
@@ -89,10 +42,8 @@ begin
 end;
 go
 
-
-
 /*
-Name: 	     integration.TargetSourceMappings
+Name: 	     TargetSourceMappings
 Description: table that contains the columns that are used by each dimension table.
 	This table is used for fintering change tracking changes that affect only these columns.
 */
@@ -136,17 +87,16 @@ values
 ;
 go 
 
-
 /*
-Name: 	     integration.NumberOfChangedColumnInTable
+Name: 	     NumberOfChangedColumnInTable
 Description: function that return the number of columns that have changed @sys_change_columns
 	in the @sourceSchema.@sourceTable table tracked by @targetTable 
 */
 create or alter function integration.NumberOfChangedColumnInTable(
     @sys_change_columns varbinary(4100),
-    @targetTable varchar(50),
-    @sourceSchema varchar(50),
-    @sourceTable varchar(50)
+    @targetTable        varchar(50),
+    @sourceSchema       varchar(50),
+    @sourceTable        varchar(50)
 )
 returns int 
 as
@@ -167,9 +117,8 @@ begin
 end;
 go 
 
-
 /*
-Name: 	     integration.Customer
+Name: 	     Customer
 Description: denormalized view of a the customer data
 */
 create or alter view integration.Customer
@@ -203,9 +152,8 @@ as
 	on CA.AddressID = A.AddressID;
 go
 
-
 /*
-Name: 	     integration.CustomerKeyCombinations
+Name: 	     CustomerKeyCombinations
 Description: Description: table that contains the combinations of 
 	CustomerID, AddressID (of the Main Office address)
 */
@@ -218,10 +166,8 @@ as
 	on C.CustomerID = CA.CustomerID and CA.AddressType = 'Main Office';
 go 
 
-
-
 /*
-Name: 	     integration.CustomerCTUpdates
+Name: 	     CustomerCTUpdates
 Description: returns the customer CT updates along with the current 
 	customer data since a specific change tracking version.
 */
@@ -296,8 +242,10 @@ with
 ;
 go
 
-
 /*
+Name: 	     SP_CustomerCTUpdates
+Description: SP that returns the CT updates for the customer dimension.
+	It also returns the current CT version and the extraction time.
 */
 create or alter procedure integration.SP_CustomerCTUpdates (
 	@cust_sync_last_ct_version int
@@ -313,9 +261,8 @@ begin
 end;
 go
 
-
 /*
-Name: 	 integration.SalesOrdersToExtract
+Name: 	     SalesOrdersToExtract
 Description: table that is populated with the sales order ids to 
 	extract by the sales order syncronization job
 */
@@ -325,7 +272,7 @@ create table integration.SalesOrdersToExtract(
 go
 
 /*
-Name: 	 integration.SalesOrderHeader
+Name: 	     SalesOrderHeader
 Description: sales order header data along with the shipping address 
 	information
 */
@@ -365,9 +312,8 @@ as
 	on SOH.ShipToAddressID = A.AddressID;
 go
 
-
 /*
-Name: 	 integration.SalesOrderDetail
+Name: 	     SalesOrderDetail
 Description: sales order detail data
 */
 create or alter view integration.SalesOrderDetail
@@ -386,16 +332,19 @@ as
 	from SalesLT.SalesOrderDetail as SOD;
 go
 
-
 /*
-TODO
+Name: 	     SP_DetectSOsToExtract
+Description: SP that detects the orders to load into the DW. First, the orders loaded
+	into the DW are inserted into the integration.SalesOrdersToExtract table. Then 
+	all finished orders in the operational database are detected. Finally, these 
+	two tables are matched and only the finished orders that are in the operational DB 
+	and not in the DW are kept. 
+
 */
 create or alter procedure integration.SP_DetectSOsToExtract
 as 
 begin 
-    -- extract all finished orders and then, for the SalesOrderIDs in integration.SalesOrdersToExtract
-    -- delete them is the among in the finished orders
-    -- insert finished orders that are not in the 
+
     with 
     finished_orders as (
         select SalesOrderID from integration.SalesOrderHeader where status = 5
@@ -411,9 +360,8 @@ begin
 end; 
 go
 
-
 /*
-Name: 	 integration.ProductCategory
+Name: 	     ProductCategory
 Description: denormalized view of the product category data
 */
 create or alter view integration.ProductCategory
@@ -439,9 +387,8 @@ as
 	on PS.ParentProductCategoryID = PC.ProductCategoryID;
 go 
 
-
 /*
-Name: 	 integration.Product
+Name: 	     Product
 Description: denormalized view of the product data
 */
 create view integration.Product 
@@ -491,9 +438,8 @@ as
 ;
 go
 
-
 /*
-Name: 	 integration.ProductKeyCombinations
+Name: 	     ProductKeyCombinations
 Description: table that contains the combinations of 
 	ProductID, ProductModelID, ProductSubcategoryID and ProductCategoryID
 */
@@ -518,9 +464,8 @@ as
 	on PM.ProductModelID = PMPD.ProductModelID and PMPD.Culture='en';
 go 
 
-
 /*
-Name: 	 integration.ProductCTUpdates
+Name: 	     ProductCTUpdates
 Description: returns the product change tracking updates along with the 
 	current product data since a specific change tracking version.
 */
@@ -616,9 +561,10 @@ return
 	on CTM.ct_key = PV.ProductID;
 go 
 
-
 /*
-TODO
+Name: 	     SP_ProductCTUpdates
+Description: SP that returns the change tracking updates for the Product dimension.
+	It also returns the current CT version and the extraction time.
 */
 create or alter procedure integration.SP_ProductCTUpdates (
 	@prod_sync_last_ct_version int

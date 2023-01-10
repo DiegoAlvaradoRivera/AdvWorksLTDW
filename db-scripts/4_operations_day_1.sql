@@ -1,8 +1,6 @@
 
-
 set nocount on;
 go 
-
 
 /*
 TRANSACTION NUMBER 1
@@ -35,7 +33,6 @@ values
 
 commit;
 
-
 /*
 TRANSACTION NUMBER 2
 
@@ -49,8 +46,6 @@ where CustomerID = 29568;
 
 commit;
 go 
-
-
 
 /*
 TRANSACTION NUMBER 3
@@ -75,7 +70,6 @@ set AddressId = @address_id
 where CustomerID = 29485 and AddressType = 'Main Office'
 
 commit;
-
 
 /*
 TRANSACTION NUMBER 4
@@ -108,8 +102,6 @@ values
 commit;
 go 
 
-
-
 /*
 TRANSACTION NUMBER 5
 
@@ -140,7 +132,6 @@ values
 commit;
 go 
 
-
 /*
 TRANSACTION NUMBER 6
 
@@ -153,7 +144,6 @@ set ListPrice = ListPrice * 1.05
 where ProductModelID = 36;
 
 commit;
-
 
 /*
 TRANSACTION NUMBER 7
@@ -200,7 +190,6 @@ where ProductId = 907;
 
 commit; 
 
-
 /*
 TRANSACTION NUMBER 9
 
@@ -213,7 +202,6 @@ set name = 'Standard Vest'
 where ProductModelId = 1;
 
 commit; 
-
 
 print 'SUCCESSFULLY COMPLETED OPERATIONS FOR DAY 1';
 go 

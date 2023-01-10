@@ -1,29 +1,9 @@
 
-/*
-
-DESCRIPTION
-This schema contains the tables nad views that conform the DW presentation area.
-
-TABLES
-- ProductsHistory: table that contains the history of changes of the product entities.
-- CustomersHistory: table that contains the history of changes of the customer entities.
-- FactSalesOrdes: table that contains the shipped sales orders.
-
-VIEWS
-- ProductsHistoryCurrentRows: view that returns the active row for the product entities.
-- CustomersHistoryCurrentRows: view that returs thr active row for the customer entities.
-- DimCustomer: view on top of the CustomersHistory table that implements the customer dimension. 
-    It applies the appropiate SCD semantic for each column.
-- DimProduct: view on top of the ProductsHistory table that implements the product dimension. 
-    It applies the appropiate SCD semantic for each column.
-
-*/
-
 CREATE SCHEMA presentation;
 GO
 
 /*
-Name: 	     presentation.ProductsHistory
+Name: 	     ProductsHistory
 Description: table that contains the history of changes of the product entities.
 */
 CREATE TABLE presentation.ProductsHistory(
@@ -53,13 +33,13 @@ CREATE TABLE presentation.ProductsHistory(
   [RowExpirationDate]         [datetime] NOT NULL,
   [RowCurrentFlag]            [bit] NOT NULL,
   
-  CONSTRAINT [PK_DimProduct] PRIMARY KEY CLUSTERED ([SurrogateKey])
+  CONSTRAINT [PK_DimProduct] PRIMARY KEY CLUSTERED (SurrogateKey)
 );
 GO
 
 
 /*
-Name: 	     presentation.CustomersHistory
+Name: 	     CustomersHistory
 Description: table that contains the history of changes of the customer entities.
 */
 CREATE TABLE presentation.CustomersHistory(
@@ -96,7 +76,7 @@ CREATE TABLE presentation.CustomersHistory(
 GO
 
 /*
-Name: 	     presentation.FactSalesOrders
+Name: 	     FactSalesOrders
 Description: table that contains the shipped sales orders.
 */
 CREATE TABLE presentation.FactSalesOrders(
@@ -141,14 +121,14 @@ CREATE TABLE presentation.FactSalesOrders(
 	[LineTotal]     AS isnull([UnitPrice]*(1.0-[UnitPriceDiscount])*[OrderQty], 0.0),
 	[LineTotalDue]  AS isnull(([UnitPrice]*(1.0-[UnitPriceDiscount])*[OrderQty])+[AllocatedTaxAmt]+[AllocatedFreight], 0.0),
 
-	CONSTRAINT [PK_FactSalesOrders] PRIMARY KEY CLUSTERED ([SalesOrderID],[SalesOrderDetailID]),
+	CONSTRAINT [PK_FactSalesOrders] PRIMARY KEY CLUSTERED ([SalesOrderID], [SalesOrderDetailID]),
   CONSTRAINT [FK_CustomerSK] FOREIGN KEY (customerSK) REFERENCES presentation.CustomersHistory(SurrogateKey),
   CONSTRAINT [FK_ProductSK] FOREIGN KEY (productSK) REFERENCES presentation.ProductsHistory(SurrogateKey)
 );
 GO
 
 /*
-Name: 	     presentation.DimCustomer
+Name: 	     DimCustomer
 Description: view on top of the CustomersHistory table that implements the customer dimension. 
     It applies the appropiate SCD semantic for each column.
 */
@@ -235,7 +215,7 @@ AS
 GO
 
 /*
-Name: 	     presentation.DimProduct
+Name: 	     DimProduct
 Description: view on top of the ProductsHistory table that implements the product dimension. 
     It applies the appropiate SCD semantic for each column.
 */

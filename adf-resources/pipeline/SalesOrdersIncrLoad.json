@@ -1,335 +1,514 @@
 {
-	"name": "SalesOrdersIncrLoad",
-	"properties": {
-		"activities": [
-			{
-				"name": "Extract SOHs",
-				"type": "Copy",
-				"dependsOn": [
-					{
-						"activity": "Detect SOs to Extract DF",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"source": {
-						"type": "AzureSqlSource",
-						"sqlReaderQuery": "select *\nfrom integration.SalesOrderHeader as SOHV\nwhere SOHV.SalesOrderID IN (\n    select SalesOrderID from integration.SalesOrdersToExtract\n)",
-						"queryTimeout": "02:00:00",
-						"partitionOption": "None"
-					},
-					"sink": {
-						"type": "ParquetSink",
-						"storeSettings": {
-							"type": "AzureBlobFSWriteSettings"
-						},
-						"formatSettings": {
-							"type": "ParquetWriteSettings"
-						}
-					},
-					"enableStaging": false,
-					"parallelCopies": 1,
-					"dataIntegrationUnits": 2,
-					"translator": {
-						"type": "TabularTranslator",
-						"typeConversion": true,
-						"typeConversionSettings": {
-							"allowDataTruncation": true,
-							"treatBooleanAsNumber": false
-						}
-					}
-				},
-				"inputs": [
-					{
-						"referenceName": "AdvWorksLTQuery",
-						"type": "DatasetReference"
-					}
-				],
-				"outputs": [
-					{
-						"referenceName": "SOHFile",
-						"type": "DatasetReference",
-						"parameters": {
-							"file": {
-								"value": "@variables('temporal_file_name')",
-								"type": "Expression"
-							}
-						}
-					}
-				]
-			},
-			{
-				"name": "Set CT File Name",
-				"type": "SetVariable",
-				"dependsOn": [],
-				"userProperties": [],
-				"typeProperties": {
-					"variableName": "temporal_file_name",
-					"value": {
-						"value": "@concat(\n    'temporal-', \n    pipeline().RunId,\n    '.parquet'\n)",
-						"type": "Expression"
-					}
-				}
-			},
-			{
-				"name": "Extract SODs",
-				"type": "Copy",
-				"dependsOn": [
-					{
-						"activity": "Detect SOs to Extract DF",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"source": {
-						"type": "AzureSqlSource",
-						"sqlReaderQuery": "select *\nfrom integration.SalesOrderDetail as SODV\nwhere SODV.SalesOrderID IN (\n    select SalesOrderID from integration.SalesOrdersToExtract\n)",
-						"queryTimeout": "02:00:00",
-						"partitionOption": "None"
-					},
-					"sink": {
-						"type": "ParquetSink",
-						"storeSettings": {
-							"type": "AzureBlobFSWriteSettings"
-						},
-						"formatSettings": {
-							"type": "ParquetWriteSettings"
-						}
-					},
-					"enableStaging": false,
-					"parallelCopies": 1,
-					"dataIntegrationUnits": 2,
-					"translator": {
-						"type": "TabularTranslator",
-						"typeConversion": true,
-						"typeConversionSettings": {
-							"allowDataTruncation": true,
-							"treatBooleanAsNumber": false
-						}
-					}
-				},
-				"inputs": [
-					{
-						"referenceName": "AdvWorksLTQuery",
-						"type": "DatasetReference"
-					}
-				],
-				"outputs": [
-					{
-						"referenceName": "SODFile",
-						"type": "DatasetReference",
-						"parameters": {
-							"file": {
-								"value": "@variables('temporal_file_name')",
-								"type": "Expression"
-							}
-						}
-					}
-				]
-			},
-			{
-				"name": "Truncate SOs to Extract Table",
-				"type": "Script",
-				"dependsOn": [
-					{
-						"activity": "Extract SOHs",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					},
-					{
-						"activity": "Extract SODs",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"linkedServiceName": {
-					"referenceName": "AdvWorksLT_SQLDB_LS",
-					"type": "LinkedServiceReference"
-				},
-				"typeProperties": {
-					"scripts": [
-						{
-							"type": "NonQuery",
-							"text": "TRUNCATE TABLE integration.SalesOrdersToExtract;"
-						}
-					],
-					"scriptBlockExecutionTimeout": "02:00:00"
-				}
-			},
-			{
-				"name": "Sales Orders Incremental Load",
-				"type": "ExecuteDataFlow",
-				"dependsOn": [
-					{
-						"activity": "Truncate SOs to Extract Table",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"dataflow": {
-						"referenceName": "DF_SalesOrdersIncrLoad",
-						"type": "DataFlowReference",
-						"datasetParameters": {
-							"SOHs": {
-								"file": {
-									"value": "@variables('temporal_file_name')",
-									"type": "Expression"
-								}
-							},
-							"SODs": {
-								"file": {
-									"value": "@variables('temporal_file_name')",
-									"type": "Expression"
-								}
-							}
-						}
-					},
-					"integrationRuntime": {
-						"referenceName": "DefaultIR",
-						"type": "IntegrationRuntimeReference"
-					},
-					"traceLevel": "Fine"
-				}
-			},
-			{
-				"name": "Detect SOs to Extract DF",
-				"type": "ExecuteDataFlow",
-				"dependsOn": [
-					{
-						"activity": "Set CT File Name",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"dataflow": {
-						"referenceName": "DF_DetectSOsToExtract",
-						"type": "DataFlowReference"
-					},
-					"integrationRuntime": {
-						"referenceName": "DefaultIR",
-						"type": "IntegrationRuntimeReference"
-					},
-					"traceLevel": "Fine"
-				}
-			},
-			{
-				"name": "Log Job Run",
-				"type": "SqlServerStoredProcedure",
-				"dependsOn": [
-					{
-						"activity": "Sales Orders Incremental Load",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"storedProcedureName": "[integration].[sp_LogJobRun]",
-					"storedProcedureParameters": {
-						"pipeline_name": {
-							"value": {
-								"value": "@pipeline().parameters.pipeline_name",
-								"type": "Expression"
-							},
-							"type": "String"
-						},
-						"pipeline_run_id": {
-							"value": {
-								"value": "@pipeline().RunId",
-								"type": "Expression"
-							},
-							"type": "String"
-						},
-						"sync_ct_version": {
-							"value": null,
-							"type": "Int32"
-						},
-						"sync_timestamp": {
-							"value": {
-								"value": "@convertTimeZone(\n    pipeline().TriggerTime,\n    'UTC',\n    'SA Pacific Standard Time'\n)\n\n",
-								"type": "Expression"
-							},
-							"type": "DateTime"
-						}
-					}
-				},
-				"linkedServiceName": {
-					"referenceName": "AdvWorksLT_SQLDB_LS",
-					"type": "LinkedServiceReference"
-				}
-			}
-		],
-		"parameters": {
-			"pipeline_name": {
-				"type": "string",
-				"defaultValue": "sales_order_sync"
-			}
-		},
-		"variables": {
-			"temporal_file_name": {
-				"type": "String"
-			}
-		},
-		"annotations": [],
-		"lastPublishTime": "2022-12-31T16:53:08Z"
-	},
-	"type": "Microsoft.DataFactory/factories/pipelines"
+    "name": "SalesOrdersIncrLoad",
+    "properties": {
+        "activities": [
+            {
+                "name": "Set CT File Name",
+                "type": "SetVariable",
+                "dependsOn": [],
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "temporal_file_name",
+                    "value": {
+                        "value": "@concat(\n    'temporal-', \n    pipeline().RunId,\n    '.parquet'\n)",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "Load Finished Orders in DW",
+                "type": "Copy",
+                "dependsOn": [
+                    {
+                        "activity": "Set CT File Name",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureSqlSource",
+                        "sqlReaderQuery": "select distinct SalesOrderId \nfrom presentation.FactSalesOrders;",
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None"
+                    },
+                    "sink": {
+                        "type": "AzureSqlSink",
+                        "preCopyScript": "truncate table integration.SalesOrdersToExtract;",
+                        "writeBehavior": "insert",
+                        "sqlWriterUseTableLock": false,
+                        "disableMetricsCollection": false
+                    },
+                    "enableStaging": false,
+                    "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                            "allowDataTruncation": true,
+                            "treatBooleanAsNumber": false
+                        }
+                    }
+                },
+                "inputs": [
+                    {
+                        "referenceName": "AdvWorksLTQuery",
+                        "type": "DatasetReference"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "referenceName": "SalesOrdersToExtract",
+                        "type": "DatasetReference"
+                    }
+                ]
+            },
+            {
+                "name": "Run SP_DetectSOsToExtract",
+                "type": "SqlServerStoredProcedure",
+                "dependsOn": [
+                    {
+                        "activity": "Load Finished Orders in DW",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "storedProcedureName": "[integration].[SP_DetectSOsToExtract]"
+                },
+                "linkedServiceName": {
+                    "referenceName": "AdvWorksLT_SQLDB_LS",
+                    "type": "LinkedServiceReference"
+                }
+            },
+            {
+                "name": "Stage SOH File",
+                "type": "Copy",
+                "dependsOn": [
+                    {
+                        "activity": "Run SP_DetectSOsToExtract",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureSqlSource",
+                        "sqlReaderQuery": "select *\nfrom integration.SalesOrderHeader as SOHV\nwhere SOHV.SalesOrderID IN (\n    select SalesOrderID from integration.SalesOrdersToExtract\n)",
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None"
+                    },
+                    "sink": {
+                        "type": "ParquetSink",
+                        "storeSettings": {
+                            "type": "AzureBlobFSWriteSettings"
+                        },
+                        "formatSettings": {
+                            "type": "ParquetWriteSettings"
+                        }
+                    },
+                    "enableStaging": false,
+                    "parallelCopies": 1,
+                    "dataIntegrationUnits": 2,
+                    "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                            "allowDataTruncation": true,
+                            "treatBooleanAsNumber": false
+                        }
+                    }
+                },
+                "inputs": [
+                    {
+                        "referenceName": "AdvWorksLTQuery",
+                        "type": "DatasetReference"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "referenceName": "SOHFile",
+                        "type": "DatasetReference",
+                        "parameters": {
+                            "file": {
+                                "value": "@variables('temporal_file_name')",
+                                "type": "Expression"
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "Stage SOD File",
+                "type": "Copy",
+                "dependsOn": [
+                    {
+                        "activity": "Run SP_DetectSOsToExtract",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureSqlSource",
+                        "sqlReaderQuery": "select *\nfrom integration.SalesOrderDetail as SODV\nwhere SODV.SalesOrderID IN (\n    select SalesOrderID from integration.SalesOrdersToExtract\n)",
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None"
+                    },
+                    "sink": {
+                        "type": "ParquetSink",
+                        "storeSettings": {
+                            "type": "AzureBlobFSWriteSettings"
+                        },
+                        "formatSettings": {
+                            "type": "ParquetWriteSettings"
+                        }
+                    },
+                    "enableStaging": false,
+                    "parallelCopies": 1,
+                    "dataIntegrationUnits": 2,
+                    "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                            "allowDataTruncation": true,
+                            "treatBooleanAsNumber": false
+                        }
+                    }
+                },
+                "inputs": [
+                    {
+                        "referenceName": "AdvWorksLTQuery",
+                        "type": "DatasetReference"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "referenceName": "SODFile",
+                        "type": "DatasetReference",
+                        "parameters": {
+                            "file": {
+                                "value": "@variables('temporal_file_name')",
+                                "type": "Expression"
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "If SOH File is Empty",
+                "type": "IfCondition",
+                "dependsOn": [
+                    {
+                        "activity": "Stage SOH File",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    },
+                    {
+                        "activity": "Stage SOD File",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@equals(\n    activity('Stage SOH File').output.rowsCopied,\n    0\n)",
+                        "type": "Expression"
+                    },
+                    "ifFalseActivities": [
+                        {
+                            "name": "Load SOH File",
+                            "type": "Copy",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "source": {
+                                    "type": "ParquetSource",
+                                    "storeSettings": {
+                                        "type": "AzureBlobFSReadSettings",
+                                        "recursive": true,
+                                        "enablePartitionDiscovery": false
+                                    }
+                                },
+                                "sink": {
+                                    "type": "AzureSqlSink",
+                                    "preCopyScript": "TRUNCATE TABLE staging.SalesOrderHeaderStaging",
+                                    "writeBehavior": "insert",
+                                    "sqlWriterUseTableLock": false,
+                                    "disableMetricsCollection": false
+                                },
+                                "enableStaging": false,
+                                "translator": {
+                                    "type": "TabularTranslator",
+                                    "typeConversion": true,
+                                    "typeConversionSettings": {
+                                        "allowDataTruncation": true,
+                                        "treatBooleanAsNumber": false
+                                    }
+                                }
+                            },
+                            "inputs": [
+                                {
+                                    "referenceName": "SOHFile",
+                                    "type": "DatasetReference",
+                                    "parameters": {
+                                        "file": {
+                                            "value": "@variables('temporal_file_name')",
+                                            "type": "Expression"
+                                        }
+                                    }
+                                }
+                            ],
+                            "outputs": [
+                                {
+                                    "referenceName": "SalesOrderHeaderStaging",
+                                    "type": "DatasetReference"
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Load SOD File",
+                            "type": "Copy",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "source": {
+                                    "type": "ParquetSource",
+                                    "storeSettings": {
+                                        "type": "AzureBlobFSReadSettings",
+                                        "recursive": true,
+                                        "enablePartitionDiscovery": false
+                                    }
+                                },
+                                "sink": {
+                                    "type": "AzureSqlSink",
+                                    "preCopyScript": "TRUNCATE TABLE staging.SalesOrderDetailStaging",
+                                    "writeBehavior": "insert",
+                                    "sqlWriterUseTableLock": false,
+                                    "disableMetricsCollection": false
+                                },
+                                "enableStaging": false,
+                                "translator": {
+                                    "type": "TabularTranslator",
+                                    "typeConversion": true,
+                                    "typeConversionSettings": {
+                                        "allowDataTruncation": true,
+                                        "treatBooleanAsNumber": false
+                                    }
+                                }
+                            },
+                            "inputs": [
+                                {
+                                    "referenceName": "SODFile",
+                                    "type": "DatasetReference",
+                                    "parameters": {
+                                        "file": {
+                                            "value": "@variables('temporal_file_name')",
+                                            "type": "Expression"
+                                        }
+                                    }
+                                }
+                            ],
+                            "outputs": [
+                                {
+                                    "referenceName": "SalesOrderDetailStaging",
+                                    "type": "DatasetReference"
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Run SP_FactSalesOrdersIncrementalLoad",
+                            "type": "SqlServerStoredProcedure",
+                            "dependsOn": [
+                                {
+                                    "activity": "Load SOH File",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                },
+                                {
+                                    "activity": "Load SOD File",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "storedProcedureName": "[staging].[SP_FactSalesOrdersIncrementalLoad]",
+                                "storedProcedureParameters": {
+                                    "pipeline_run_id": {
+                                        "value": {
+                                            "value": "@pipeline().RunId",
+                                            "type": "Expression"
+                                        },
+                                        "type": "String"
+                                    }
+                                }
+                            },
+                            "linkedServiceName": {
+                                "referenceName": "AdvWorksLT_SQLDB_LS",
+                                "type": "LinkedServiceReference"
+                            }
+                        }
+                    ],
+                    "ifTrueActivities": [
+                        {
+                            "name": "Log Job Run",
+                            "type": "SqlServerStoredProcedure",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "storedProcedureName": "[staging].[SP_LogJobRun]",
+                                "storedProcedureParameters": {
+                                    "pipeline_name": {
+                                        "value": {
+                                            "value": "@pipeline().parameters.pipeline_name",
+                                            "type": "Expression"
+                                        },
+                                        "type": "String"
+                                    },
+                                    "pipeline_run_id": {
+                                        "value": {
+                                            "value": "@pipeline().RunId",
+                                            "type": "Expression"
+                                        },
+                                        "type": "String"
+                                    },
+                                    "sync_ct_version": {
+                                        "value": null,
+                                        "type": "Int32"
+                                    },
+                                    "sync_timestamp": {
+                                        "value": {
+                                            "value": "@convertTimeZone(\n    pipeline().TriggerTime,\n    'UTC',\n    'SA Pacific Standard Time'\n)\n\n",
+                                            "type": "Expression"
+                                        },
+                                        "type": "DateTime"
+                                    }
+                                }
+                            },
+                            "linkedServiceName": {
+                                "referenceName": "AdvWorksLT_SQLDB_LS",
+                                "type": "LinkedServiceReference"
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "Truncate SOs to Extract Table",
+                "type": "Script",
+                "dependsOn": [
+                    {
+                        "activity": "If SOH File is Empty",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "linkedServiceName": {
+                    "referenceName": "AdvWorksLT_SQLDB_LS",
+                    "type": "LinkedServiceReference"
+                },
+                "typeProperties": {
+                    "scripts": [
+                        {
+                            "type": "NonQuery",
+                            "text": "TRUNCATE TABLE integration.SalesOrdersToExtract;"
+                        }
+                    ],
+                    "scriptBlockExecutionTimeout": "02:00:00"
+                }
+            }
+        ],
+        "parameters": {
+            "pipeline_name": {
+                "type": "string",
+                "defaultValue": "sales_orders_sync"
+            }
+        },
+        "variables": {
+            "temporal_file_name": {
+                "type": "String"
+            }
+        },
+        "annotations": [],
+        "lastPublishTime": "2023-01-09T22:37:25Z"
+    },
+    "type": "Microsoft.DataFactory/factories/pipelines"
 }

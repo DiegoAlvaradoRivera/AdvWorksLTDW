@@ -1,44 +1,44 @@
 
+-- activate change tracking at the database level
+alter database [$(DATABASE)]
+    set change_tracking = on
+    (change_retention = 2 days, auto_cleanup = on);
+go
 
--- ACTIVATE CHANGE TRACKING AT THE DATABASE LEVEL
-ALTER DATABASE [$(DATABASE)]
-    SET CHANGE_TRACKING = ON
-    (CHANGE_RETENTION = 2 DAYS, AUTO_CLEANUP = ON);
-GO
+-- activate change trackiong on the tables
+alter table SalesLT.Customer
+	enable change_tracking
+    with (track_columns_updated = on);
+go 
 
+alter table SalesLT.Address
+    enable change_tracking;
+go
 
--- ACTIVATE CHANGE TRACKING ON THE TABLES
-ALTER TABLE SalesLT.Customer
-	ENABLE CHANGE_TRACKING;
-GO 
+alter table SalesLT.CustomerAddress
+    enable change_tracking;
+go
 
-ALTER TABLE SalesLT.Address
-    ENABLE CHANGE_TRACKING;
-GO
+alter table SalesLT.Product
+    enable change_tracking
+    with (track_columns_updated = on);
+go
 
-ALTER TABLE SalesLT.CustomerAddress
-    ENABLE CHANGE_TRACKING;
-GO
+alter table SalesLT.ProductModel
+    enable change_tracking;
+go
 
-ALTER TABLE SalesLT.Product
-    ENABLE CHANGE_TRACKING;
-GO
+alter table SalesLT.ProductCategory
+    enable change_tracking;
+go
 
-ALTER TABLE SalesLT.ProductModel
-    ENABLE CHANGE_TRACKING;
-GO
+alter table SalesLT.ProductDescription
+    enable change_tracking;
+go
 
-ALTER TABLE SalesLT.ProductCategory
-    ENABLE CHANGE_TRACKING;
-GO
+alter table SalesLT.ProductModelProductDescription
+    enable change_tracking;
+go
 
-ALTER TABLE SalesLT.ProductDescription
-    ENABLE CHANGE_TRACKING;
-GO
-
-ALTER TABLE SalesLT.ProductModelProductDescription
-    ENABLE CHANGE_TRACKING;
-GO
-
-PRINT 'CHANGE TRACKING ACTIVATED SUCCESSFULLY';
-GO
+print 'CHANGE TRACKING ACTIVATED SUCCESSFULLY';
+go

@@ -1,122 +1,124 @@
 {
-	"name": "SOHFile",
+	"name": "SalesOrderHeaderStaging",
 	"properties": {
 		"linkedServiceName": {
-			"referenceName": "AdvWorksLT_ADLS_LS",
+			"referenceName": "AdvWorksLT_SQLDB_LS",
 			"type": "LinkedServiceReference"
 		},
-		"parameters": {
-			"file": {
-				"type": "string"
-			}
-		},
 		"folder": {
-			"name": "Files"
+			"name": "Staging"
 		},
 		"annotations": [],
-		"type": "Parquet",
-		"typeProperties": {
-			"location": {
-				"type": "AzureBlobFSLocation",
-				"fileName": {
-					"value": "@dataset().file",
-					"type": "Expression"
-				},
-				"folderPath": "SOH/files",
-				"fileSystem": "staging"
-			},
-			"compressionCodec": "snappy"
-		},
+		"type": "AzureSqlTable",
 		"schema": [
 			{
 				"name": "SalesOrderID",
-				"type": "INT64"
-			},
-			{
-				"name": "OrderDate",
-				"type": "TIMESTAMP_MICROS"
-			},
-			{
-				"name": "DueDate",
-				"type": "TIMESTAMP_MICROS"
-			},
-			{
-				"name": "ShipDate",
-				"type": "TIMESTAMP_MICROS"
+				"type": "int",
+				"precision": 10
 			},
 			{
 				"name": "CustomerID",
-				"type": "INT64"
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "OrderDate",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			},
+			{
+				"name": "DueDate",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			},
+			{
+				"name": "ShipDate",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
 			},
 			{
 				"name": "Status",
-				"type": "INT64"
+				"type": "tinyint",
+				"precision": 3
 			},
 			{
 				"name": "OnlineOrderFlag",
-				"type": "BOOLEAN"
+				"type": "bit"
 			},
 			{
 				"name": "SalesOrderNumber",
-				"type": "UTF8"
+				"type": "nvarchar"
 			},
 			{
 				"name": "PurchaseOrderNumber",
-				"type": "UTF8"
+				"type": "nvarchar"
 			},
 			{
 				"name": "AccountNumber",
-				"type": "UTF8"
+				"type": "nvarchar"
 			},
 			{
 				"name": "ShipMethod",
-				"type": "UTF8"
+				"type": "nvarchar"
 			},
 			{
 				"name": "CreditCardApprovalCode",
-				"type": "INT32"
+				"type": "varchar"
 			},
 			{
 				"name": "TaxAmt",
-				"type": "DOUBLE"
+				"type": "money",
+				"precision": 19,
+				"scale": 4
 			},
 			{
 				"name": "Freight",
-				"type": "DOUBLE"
+				"type": "money",
+				"precision": 19,
+				"scale": 4
 			},
 			{
 				"name": "Subtotal",
-				"type": "DOUBLE"
+				"type": "money",
+				"precision": 19,
+				"scale": 4
 			},
 			{
 				"name": "Comment",
-				"type": "INT32"
+				"type": "nvarchar"
 			},
 			{
 				"name": "ShippingAddressLine1",
-				"type": "UTF8"
+				"type": "nvarchar"
 			},
 			{
 				"name": "ShippingAddressLine2",
-				"type": "UTF8"
+				"type": "nvarchar"
 			},
 			{
 				"name": "ShippingCity",
-				"type": "UTF8"
+				"type": "nvarchar"
 			},
 			{
 				"name": "ShippingStateProvince",
-				"type": "UTF8"
+				"type": "nvarchar"
 			},
 			{
 				"name": "ShippingCountryRegion",
-				"type": "UTF8"
+				"type": "nvarchar"
 			},
 			{
 				"name": "ShippingPostalCode",
-				"type": "UTF8"
+				"type": "nvarchar"
 			}
-		]
+		],
+		"typeProperties": {
+			"schema": "staging",
+			"table": "SalesOrderHeaderStaging"
+		}
 	},
 	"type": "Microsoft.DataFactory/factories/datasets"
 }

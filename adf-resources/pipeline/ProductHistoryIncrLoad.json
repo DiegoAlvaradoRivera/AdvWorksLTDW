@@ -1,307 +1,612 @@
 {
-	"name": "ProductHistoryIncrLoad",
-	"properties": {
-		"activities": [
-			{
-				"name": "Extract Product CT File",
-				"type": "Copy",
-				"dependsOn": [
-					{
-						"activity": "Pre CT Lookup",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					},
-					{
-						"activity": "Get Last Sync CT Version",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					},
-					{
-						"activity": "Set CT File Name",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"source": {
-						"type": "AzureSqlSource",
-						"sqlReaderQuery": {
-							"value": "@concat('\nSELECT \nCHANGE_TRACKING_CURRENT_VERSION() as current_ct_version,\nintegration.EasternTime() as extraction_time,\n*\nFROM integration.ProductCTUpdates(', \nactivity('Get Last Sync CT Version').output.firstRow.sync_ct_version,\n')'\n)",
-							"type": "Expression"
-						},
-						"queryTimeout": "00:05:00",
-						"partitionOption": "None"
-					},
-					"sink": {
-						"type": "ParquetSink",
-						"storeSettings": {
-							"type": "AzureBlobFSWriteSettings"
-						},
-						"formatSettings": {
-							"type": "ParquetWriteSettings"
-						}
-					},
-					"enableStaging": false,
-					"parallelCopies": 1,
-					"dataIntegrationUnits": 2,
-					"translator": {
-						"type": "TabularTranslator",
-						"typeConversion": true,
-						"typeConversionSettings": {
-							"allowDataTruncation": true,
-							"treatBooleanAsNumber": false
-						}
-					}
-				},
-				"inputs": [
-					{
-						"referenceName": "AdvWorksLTQuery",
-						"type": "DatasetReference"
-					}
-				],
-				"outputs": [
-					{
-						"referenceName": "ProductCTFile",
-						"type": "DatasetReference",
-						"parameters": {
-							"file": {
-								"value": "@variables('temporal_file_name')",
-								"type": "Expression"
-							}
-						}
-					}
-				]
-			},
-			{
-				"name": "Pre CT Lookup",
-				"type": "Lookup",
-				"dependsOn": [],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"source": {
-						"type": "AzureSqlSource",
-						"sqlReaderQuery": "SELECT \nCHANGE_TRACKING_CURRENT_VERSION() as ct_version,\nintegration.EasternTime() as extraction_time",
-						"queryTimeout": "00:01:00",
-						"partitionOption": "None"
-					},
-					"dataset": {
-						"referenceName": "AdvWorksLTQuery",
-						"type": "DatasetReference"
-					}
-				}
-			},
-			{
-				"name": "Get Last Sync CT Version",
-				"type": "Lookup",
-				"dependsOn": [],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"source": {
-						"type": "AzureSqlSource",
-						"sqlReaderQuery": "select *\nfrom integration.JobLogs\nwhere pipeline_name = 'product_sync'\norder by sync_timestamp desc",
-						"queryTimeout": "00:01:00",
-						"partitionOption": "None"
-					},
-					"dataset": {
-						"referenceName": "AdvWorksLTQuery",
-						"type": "DatasetReference"
-					}
-				}
-			},
-			{
-				"name": "Set CT File Name",
-				"type": "SetVariable",
-				"dependsOn": [],
-				"userProperties": [],
-				"typeProperties": {
-					"variableName": "temporal_file_name",
-					"value": {
-						"value": "@concat(\n    'temporal-', \n    pipeline().RunId,\n    '.parquet'\n)",
-						"type": "Expression"
-					}
-				}
-			},
-			{
-				"name": "Post CT Lookup",
-				"type": "Lookup",
-				"dependsOn": [
-					{
-						"activity": "Extract Product CT File",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"source": {
-						"type": "ParquetSource",
-						"storeSettings": {
-							"type": "AzureBlobFSReadSettings",
-							"recursive": true,
-							"enablePartitionDiscovery": false
-						}
-					},
-					"dataset": {
-						"referenceName": "ProductCTFile",
-						"type": "DatasetReference",
-						"parameters": {
-							"file": {
-								"value": "@variables('temporal_file_name')",
-								"type": "Expression"
-							}
-						}
-					}
-				}
-			},
-			{
-				"name": "Log Job Run",
-				"type": "SqlServerStoredProcedure",
-				"dependsOn": [
-					{
-						"activity": "Products History Incremental Load",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"storedProcedureName": "[integration].[sp_LogJobRun]",
-					"storedProcedureParameters": {
-						"pipeline_name": {
-							"value": {
-								"value": "@pipeline().parameters.pipeline_name",
-								"type": "Expression"
-							},
-							"type": "String"
-						},
-						"pipeline_run_id": {
-							"value": {
-								"value": "@pipeline().RunId",
-								"type": "Expression"
-							},
-							"type": "String"
-						},
-						"sync_ct_version": {
-							"value": {
-								"value": "@if(\n    equals(\n        activity('Extract Product CT File').output.rowsRead, \n        0\n    ), \n    activity('Pre CT Lookup').output.firstRow.ct_version, \n    activity('Post CT Lookup').output.firstRow.current_ct_version\n)",
-								"type": "Expression"
-							},
-							"type": "Int32"
-						},
-						"sync_timestamp": {
-							"value": {
-								"value": "@if(\n    equals(\n        activity('Extract Product CT File').output.rowsRead, \n        0\n    ), \n    activity('Pre CT Lookup').output.firstRow.extraction_time, \n    activity('Post CT Lookup').output.firstRow.extraction_time\n)",
-								"type": "Expression"
-							},
-							"type": "DateTime"
-						}
-					}
-				},
-				"linkedServiceName": {
-					"referenceName": "AdvWorksLT_SQLDB_LS",
-					"type": "LinkedServiceReference"
-				}
-			},
-			{
-				"name": "Products History Incremental Load",
-				"type": "ExecuteDataFlow",
-				"dependsOn": [
-					{
-						"activity": "Post CT Lookup",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"dataflow": {
-						"referenceName": "DF_ProductHistoryIncrLoad",
-						"type": "DataFlowReference",
-						"datasetParameters": {
-							"CTFile": {
-								"file": {
-									"value": "@variables('temporal_file_name')",
-									"type": "Expression"
-								}
-							}
-						}
-					},
-					"integrationRuntime": {
-						"referenceName": "DefaultIR",
-						"type": "IntegrationRuntimeReference"
-					},
-					"traceLevel": "Fine"
-				}
-			}
-		],
-		"parameters": {
-			"pipeline_name": {
-				"type": "string",
-				"defaultValue": "product_sync"
-			}
-		},
-		"variables": {
-			"temporal_file_name": {
-				"type": "String"
-			},
-			"ct_version": {
-				"type": "String"
-			},
-			"extraction_tm": {
-				"type": "String"
-			}
-		},
-		"annotations": [],
-		"lastPublishTime": "2022-12-31T16:53:00Z"
-	},
-	"type": "Microsoft.DataFactory/factories/pipelines"
+    "name": "ProductHistoryIncrLoad",
+    "properties": {
+        "activities": [
+            {
+                "name": "Stage Product CT File",
+                "type": "Copy",
+                "dependsOn": [
+                    {
+                        "activity": "Pre CT Lookup",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    },
+                    {
+                        "activity": "Get Last Sync CT Version",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    },
+                    {
+                        "activity": "Set CT File Name",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureSqlSource",
+                        "sqlReaderStoredProcedureName": "[integration].[SP_ProductCTUpdates]",
+                        "storedProcedureParameters": {
+                            "prod_sync_last_ct_version": {
+                                "type": "Int32",
+                                "value": {
+                                    "value": "@activity('Get Last Sync CT Version').output.firstRow.sync_ct_version",
+                                    "type": "Expression"
+                                }
+                            }
+                        },
+                        "queryTimeout": "00:05:00",
+                        "partitionOption": "None"
+                    },
+                    "sink": {
+                        "type": "ParquetSink",
+                        "storeSettings": {
+                            "type": "AzureBlobFSWriteSettings"
+                        },
+                        "formatSettings": {
+                            "type": "ParquetWriteSettings"
+                        }
+                    },
+                    "enableStaging": false,
+                    "parallelCopies": 1,
+                    "dataIntegrationUnits": 2,
+                    "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                            "allowDataTruncation": true,
+                            "treatBooleanAsNumber": false
+                        }
+                    }
+                },
+                "inputs": [
+                    {
+                        "referenceName": "AdvWorksLTQuery",
+                        "type": "DatasetReference"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "referenceName": "ProductCTFile",
+                        "type": "DatasetReference",
+                        "parameters": {
+                            "file": {
+                                "value": "@variables('temporal_file_name')",
+                                "type": "Expression"
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "Pre CT Lookup",
+                "type": "Lookup",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureSqlSource",
+                        "sqlReaderQuery": "SELECT \nCHANGE_TRACKING_CURRENT_VERSION() as ct_current_version,\nintegration.EasternTime() as extraction_time",
+                        "queryTimeout": "00:01:00",
+                        "partitionOption": "None"
+                    },
+                    "dataset": {
+                        "referenceName": "AdvWorksLTQuery",
+                        "type": "DatasetReference"
+                    }
+                }
+            },
+            {
+                "name": "Get Last Sync CT Version",
+                "type": "Lookup",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureSqlSource",
+                        "sqlReaderStoredProcedureName": "[staging].[SP_GetJobtLastExecution]",
+                        "storedProcedureParameters": {
+                            "pipeline_name": {
+                                "type": "String",
+                                "value": {
+                                    "value": "@pipeline().parameters.pipeline_name",
+                                    "type": "Expression"
+                                }
+                            }
+                        },
+                        "queryTimeout": "00:01:00",
+                        "partitionOption": "None"
+                    },
+                    "dataset": {
+                        "referenceName": "AdvWorksLTQuery",
+                        "type": "DatasetReference"
+                    }
+                }
+            },
+            {
+                "name": "Set CT File Name",
+                "type": "SetVariable",
+                "dependsOn": [],
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "temporal_file_name",
+                    "value": {
+                        "value": "@concat(\n    'temporal-', \n    pipeline().RunId,\n    '.parquet'\n)",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "If Stage File is Empty",
+                "type": "IfCondition",
+                "dependsOn": [
+                    {
+                        "activity": "Stage Product CT File",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@equals(\n    activity('Stage Product CT File').output.rowsCopied, \n    0\n)",
+                        "type": "Expression"
+                    },
+                    "ifFalseActivities": [
+                        {
+                            "name": "Load Product CT File",
+                            "type": "Copy",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "source": {
+                                    "type": "ParquetSource",
+                                    "storeSettings": {
+                                        "type": "AzureBlobFSReadSettings",
+                                        "recursive": true,
+                                        "enablePartitionDiscovery": false
+                                    }
+                                },
+                                "sink": {
+                                    "type": "AzureSqlSink",
+                                    "preCopyScript": "TRUNCATE TABLE staging.ProductCTChangesStaging;",
+                                    "writeBehavior": "insert",
+                                    "sqlWriterUseTableLock": false,
+                                    "disableMetricsCollection": false
+                                },
+                                "enableStaging": false,
+                                "translator": {
+                                    "type": "TabularTranslator",
+                                    "mappings": [
+                                        {
+                                            "source": {
+                                                "name": "ct_current_version",
+                                                "type": "Int64",
+                                                "physicalType": "INT64"
+                                            },
+                                            "sink": {
+                                                "name": "ct_current_version",
+                                                "type": "Int32",
+                                                "physicalType": "int"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "extraction_time",
+                                                "type": "DateTime",
+                                                "physicalType": "INT96"
+                                            },
+                                            "sink": {
+                                                "name": "extraction_time",
+                                                "type": "DateTime",
+                                                "physicalType": "datetime"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "ct_key",
+                                                "type": "Int32",
+                                                "physicalType": "INT32"
+                                            },
+                                            "sink": {
+                                                "name": "ct_key",
+                                                "type": "Int32",
+                                                "physicalType": "int"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "ct_operation",
+                                                "type": "String",
+                                                "physicalType": "UTF8"
+                                            },
+                                            "sink": {
+                                                "name": "ct_operation",
+                                                "type": "String",
+                                                "physicalType": "char"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "ct_insertion_time",
+                                                "type": "DateTime",
+                                                "physicalType": "INT96"
+                                            },
+                                            "sink": {
+                                                "name": "ct_insertion_time",
+                                                "type": "DateTime",
+                                                "physicalType": "datetime"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "ct_last_mod_time",
+                                                "type": "DateTime",
+                                                "physicalType": "INT96"
+                                            },
+                                            "sink": {
+                                                "name": "ct_last_mod_time",
+                                                "type": "DateTime",
+                                                "physicalType": "datetime"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "ProductID",
+                                                "type": "Int32",
+                                                "physicalType": "INT32"
+                                            },
+                                            "sink": {
+                                                "name": "ProductID",
+                                                "type": "Int32",
+                                                "physicalType": "int"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "Name",
+                                                "type": "String",
+                                                "physicalType": "UTF8"
+                                            },
+                                            "sink": {
+                                                "name": "Name",
+                                                "type": "String",
+                                                "physicalType": "nvarchar"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "ProductNumber",
+                                                "type": "String",
+                                                "physicalType": "UTF8"
+                                            },
+                                            "sink": {
+                                                "name": "ProductNumber",
+                                                "type": "String",
+                                                "physicalType": "nvarchar"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "Color",
+                                                "type": "String",
+                                                "physicalType": "UTF8"
+                                            },
+                                            "sink": {
+                                                "name": "Color",
+                                                "type": "String",
+                                                "physicalType": "nvarchar"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "StandardCost",
+                                                "type": "Decimal",
+                                                "physicalType": "DECIMAL",
+                                                "scale": 4,
+                                                "precision": 19
+                                            },
+                                            "sink": {
+                                                "name": "StandardCost",
+                                                "type": "Decimal",
+                                                "physicalType": "money",
+                                                "scale": 4,
+                                                "precision": 19
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "ListPrice",
+                                                "type": "Decimal",
+                                                "physicalType": "DECIMAL",
+                                                "scale": 4,
+                                                "precision": 19
+                                            },
+                                            "sink": {
+                                                "name": "ListPrice",
+                                                "type": "Decimal",
+                                                "physicalType": "money",
+                                                "scale": 4,
+                                                "precision": 19
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "Size",
+                                                "type": "String",
+                                                "physicalType": "UTF8"
+                                            },
+                                            "sink": {
+                                                "name": "Size",
+                                                "type": "String",
+                                                "physicalType": "nvarchar"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "Weight",
+                                                "type": "Decimal",
+                                                "physicalType": "DECIMAL",
+                                                "scale": 2,
+                                                "precision": 8
+                                            },
+                                            "sink": {
+                                                "name": "Weight",
+                                                "type": "Decimal",
+                                                "physicalType": "decimal",
+                                                "scale": 2,
+                                                "precision": 8
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "SellStartDate",
+                                                "type": "DateTime",
+                                                "physicalType": "INT96"
+                                            },
+                                            "sink": {
+                                                "name": "SellStartDate",
+                                                "type": "DateTime",
+                                                "physicalType": "datetime"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "SellEndDate",
+                                                "type": "DateTime",
+                                                "physicalType": "INT96"
+                                            },
+                                            "sink": {
+                                                "name": "SellEndDate",
+                                                "type": "DateTime",
+                                                "physicalType": "datetime"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "DiscontinuedDate",
+                                                "type": "DateTime",
+                                                "physicalType": "INT96"
+                                            },
+                                            "sink": {
+                                                "name": "DiscontinuedDate",
+                                                "type": "DateTime",
+                                                "physicalType": "datetime"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "ProductModel",
+                                                "type": "String",
+                                                "physicalType": "UTF8"
+                                            },
+                                            "sink": {
+                                                "name": "ProductModel",
+                                                "type": "String",
+                                                "physicalType": "nvarchar"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "ProductModelDescription",
+                                                "type": "String",
+                                                "physicalType": "UTF8"
+                                            },
+                                            "sink": {
+                                                "name": "ProductModelDescription",
+                                                "type": "String",
+                                                "physicalType": "nvarchar"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "ProductSubcategory",
+                                                "type": "String",
+                                                "physicalType": "UTF8"
+                                            },
+                                            "sink": {
+                                                "name": "ProductSubcategory",
+                                                "type": "String",
+                                                "physicalType": "nvarchar"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "ProductCategory",
+                                                "type": "String",
+                                                "physicalType": "UTF8"
+                                            },
+                                            "sink": {
+                                                "name": "ProductCategory",
+                                                "type": "String",
+                                                "physicalType": "nvarchar"
+                                            }
+                                        }
+                                    ],
+                                    "typeConversion": true,
+                                    "typeConversionSettings": {
+                                        "allowDataTruncation": true,
+                                        "treatBooleanAsNumber": false
+                                    }
+                                }
+                            },
+                            "inputs": [
+                                {
+                                    "referenceName": "ProductCTFile",
+                                    "type": "DatasetReference",
+                                    "parameters": {
+                                        "file": {
+                                            "value": "@variables('temporal_file_name')",
+                                            "type": "Expression"
+                                        }
+                                    }
+                                }
+                            ],
+                            "outputs": [
+                                {
+                                    "referenceName": "ProductCTChangesStaging",
+                                    "type": "DatasetReference"
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Run SP_ProductHistoryIncrementalLoad",
+                            "type": "SqlServerStoredProcedure",
+                            "dependsOn": [
+                                {
+                                    "activity": "Load Product CT File",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "storedProcedureName": "[staging].[SP_ProductHistoryIncrementalLoad]",
+                                "storedProcedureParameters": {
+                                    "pipeline_run_id": {
+                                        "value": {
+                                            "value": "@pipeline().RunId",
+                                            "type": "Expression"
+                                        },
+                                        "type": "String"
+                                    }
+                                }
+                            },
+                            "linkedServiceName": {
+                                "referenceName": "AdvWorksLT_SQLDB_LS",
+                                "type": "LinkedServiceReference"
+                            }
+                        }
+                    ],
+                    "ifTrueActivities": [
+                        {
+                            "name": "Log Job Run",
+                            "type": "SqlServerStoredProcedure",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "storedProcedureName": "[staging].[SP_LogJobRun]",
+                                "storedProcedureParameters": {
+                                    "pipeline_name": {
+                                        "value": {
+                                            "value": "@pipeline().parameters.pipeline_name",
+                                            "type": "Expression"
+                                        },
+                                        "type": "String"
+                                    },
+                                    "pipeline_run_id": {
+                                        "value": {
+                                            "value": "@pipeline().RunId",
+                                            "type": "Expression"
+                                        },
+                                        "type": "String"
+                                    },
+                                    "sync_ct_version": {
+                                        "value": {
+                                            "value": "@activity('Pre CT Lookup').output.firstRow.ct_current_version",
+                                            "type": "Expression"
+                                        },
+                                        "type": "Int32"
+                                    },
+                                    "sync_timestamp": {
+                                        "value": {
+                                            "value": "@activity('Pre CT Lookup').output.firstRow.extraction_time",
+                                            "type": "Expression"
+                                        },
+                                        "type": "DateTime"
+                                    }
+                                }
+                            },
+                            "linkedServiceName": {
+                                "referenceName": "AdvWorksLT_SQLDB_LS",
+                                "type": "LinkedServiceReference"
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        "parameters": {
+            "pipeline_name": {
+                "type": "string",
+                "defaultValue": "product_sync"
+            }
+        },
+        "variables": {
+            "temporal_file_name": {
+                "type": "String"
+            }
+        },
+        "annotations": [],
+        "lastPublishTime": "2023-01-09T22:37:16Z"
+    },
+    "type": "Microsoft.DataFactory/factories/pipelines"
 }

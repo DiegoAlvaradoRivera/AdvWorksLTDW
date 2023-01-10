@@ -1,126 +1,122 @@
 {
-	"name": "CustomerCTFile",
+	"name": "CustomerCTChangesStaging",
 	"properties": {
 		"linkedServiceName": {
-			"referenceName": "AdvWorksLT_ADLS_LS",
+			"referenceName": "AdvWorksLT_SQLDB_LS",
 			"type": "LinkedServiceReference"
 		},
-		"parameters": {
-			"file": {
-				"type": "string"
-			}
-		},
 		"folder": {
-			"name": "Files"
+			"name": "Staging"
 		},
 		"annotations": [],
-		"type": "Parquet",
-		"typeProperties": {
-			"location": {
-				"type": "AzureBlobFSLocation",
-				"fileName": {
-					"value": "@dataset().file",
-					"type": "Expression"
-				},
-				"folderPath": "customer/ct_files",
-				"fileSystem": "staging"
-			},
-			"compressionCodec": "snappy"
-		},
+		"type": "AzureSqlTable",
 		"schema": [
 			{
 				"name": "ct_current_version",
-				"type": "INT64"
+				"type": "int",
+				"precision": 10
 			},
 			{
 				"name": "extraction_time",
-				"type": "INT96"
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
 			},
 			{
 				"name": "ct_key",
-				"type": "INT32"
+				"type": "int",
+				"precision": 10
 			},
 			{
 				"name": "ct_operation",
-				"type": "UTF8"
+				"type": "char"
 			},
 			{
 				"name": "ct_insertion_time",
-				"type": "INT96"
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
 			},
 			{
 				"name": "ct_last_mod_time",
-				"type": "INT96"
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
 			},
 			{
 				"name": "CustomerID",
-				"type": "INT32"
+				"type": "int",
+				"precision": 10
 			},
 			{
 				"name": "NameStyle",
-				"type": "BOOLEAN"
+				"type": "bit"
 			},
 			{
 				"name": "Title",
-				"type": "UTF8"
+				"type": "nvarchar"
 			},
 			{
 				"name": "FirstName",
-				"type": "UTF8"
+				"type": "nvarchar"
 			},
 			{
 				"name": "MiddleName",
-				"type": "UTF8"
+				"type": "nvarchar"
 			},
 			{
 				"name": "LastName",
-				"type": "UTF8"
+				"type": "nvarchar"
 			},
 			{
 				"name": "Suffix",
-				"type": "UTF8"
+				"type": "nvarchar"
 			},
 			{
 				"name": "CompanyName",
-				"type": "UTF8"
+				"type": "nvarchar"
 			},
 			{
 				"name": "SalesPerson",
-				"type": "UTF8"
+				"type": "nvarchar"
 			},
 			{
 				"name": "EmailAddress",
-				"type": "UTF8"
+				"type": "nvarchar"
 			},
 			{
 				"name": "Phone",
-				"type": "UTF8"
+				"type": "nvarchar"
 			},
 			{
 				"name": "MainOfficeAddressLine1",
-				"type": "UTF8"
+				"type": "nvarchar"
 			},
 			{
 				"name": "MainOfficeAddressLine2",
-				"type": "UTF8"
+				"type": "nvarchar"
 			},
 			{
 				"name": "MainOfficeCity",
-				"type": "UTF8"
+				"type": "nvarchar"
 			},
 			{
 				"name": "MainOfficeStateProvince",
-				"type": "UTF8"
+				"type": "nvarchar"
 			},
 			{
 				"name": "MainOfficeCountryRegion",
-				"type": "UTF8"
+				"type": "nvarchar"
 			},
 			{
 				"name": "MainOfficePostalCode",
-				"type": "UTF8"
+				"type": "nvarchar"
 			}
-		]
+		],
+		"typeProperties": {
+			"schema": "staging",
+			"table": "CustomerCTChangesStaging"
+		}
 	},
 	"type": "Microsoft.DataFactory/factories/datasets"
 }

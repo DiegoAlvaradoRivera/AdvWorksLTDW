@@ -9,31 +9,31 @@ Description: table that contains the history of changes of the product entities.
 CREATE TABLE presentation.ProductsHistory(
 
   -- PK
-  [SurrogateKey]              [int] identity(1, 1) NOT NULL,
+  SurrogateKey              INT IDENTITY(1, 1) NOT NULL,
 
   -- attributes 
-  [ProductID]                 [int] NOT NULL,
-  [Name]                      [nvarchar](50) NOT NULL,
-  [ProductNumber]             [nvarchar](25) NOT NULL,
-  [Color]                     [nvarchar](15) NULL,
-  [StandardCost]              [money] NOT NULL,
-  [ListPrice]                 [money] NOT NULL,
-  [Size]                      [nvarchar](5) NULL,
-  [Weight]                    [decimal](8, 2) NULL,
-  [SellStartDate]             [datetime] NOT NULL,
-  [SellEndDate]               [datetime] NULL,
-  [DiscontinuedDate]          [datetime] NULL,
-  [ProductModel]              [nvarchar](50) NOT NULL,
-  [ProductModelDescription]   [nvarchar](400) NOT NULL,
-  [ProductSubcategory]        [nvarchar](50) NOT NULL,
-  [ProductCategory]           [nvarchar](50) NOT NULL,
+  ProductID                 INT             NOT NULL,
+  Name                      NVARCHAR(50)    NOT NULL,
+  ProductNumber             NVARCHAR(25)    NOT NULL,
+  Color                     NVARCHAR(15)    NULL,
+  StandardCost              MONEY           NOT NULL,
+  ListPrice                 MONEY           NOT NULL,
+  Size                      NVARCHAR(5)     NULL,
+  Weight                    DECIMAL(8, 2)   NULL,
+  SellStartDate             DATETIME        NOT NULL,
+  SellEndDate               DATETIME        NULL,
+  DiscontinuedDate          DATETIME        NULL,
+  ProductModel              NVARCHAR(50)    NOT NULL,
+  ProductModelDescription   NVARCHAR(400)   NOT NULL,
+  ProductSubcategory        NVARCHAR(50)    NOT NULL,
+  ProductCategory           NVARCHAR(50)    NOT NULL,
 
   -- SCD 2 Metadata Columns
-  [RowEffectiveDate]          [datetime] NOT NULL,
-  [RowExpirationDate]         [datetime] NOT NULL,
-  [RowCurrentFlag]            [bit] NOT NULL,
+  RowEffectiveDate          DATETIME        NOT NULL,
+  RowExpirationDate         DATETIME        NOT NULL,
+  RowCurrentFlag            BIT             NOT NULL,
   
-  CONSTRAINT [PK_DimProduct] PRIMARY KEY CLUSTERED (SurrogateKey)
+  CONSTRAINT PK_DimProduct PRIMARY KEY CLUSTERED (SurrogateKey)
 );
 GO
 
@@ -45,33 +45,33 @@ Description: table that contains the history of changes of the customer entities
 CREATE TABLE presentation.CustomersHistory(
   
   -- PK
-  [SurrogateKey]              [int] identity(1, 1) NOT NULL,
+  SurrogateKey              INT IDENTITY(1, 1) NOT NULL,
   
   -- attributes
-  [CustomerID]                [int] NOT NULL,
-  [NameStyle]                 [bit] NOT NULL,
-  [Title]                     [nvarchar](8) NULL,
-  [FirstName]                 [nvarchar](50) NOT NULL,
-  [MiddleName]                [nvarchar](50) NULL,
-  [LastName]                  [nvarchar](50) NOT NULL,
-  [Suffix]                    [nvarchar](10) NULL,
-  [CompanyName]               [nvarchar](128) NULL,
-  [SalesPerson]               [nvarchar](256) NULL,
-  [EmailAddress]              [nvarchar](50) NULL,
-  [Phone]                     [nvarchar](25) NULL,
-  [MainOfficeAddressLine1]    [nvarchar](60) NOT NULL,
-  [MainOfficeAddressLine2]    [nvarchar](60) NULL,
-  [MainOfficeCity]            [nvarchar](30) NOT NULL,
-  [MainOfficeStateProvince]   [nvarchar](50) NOT NULL,
-  [MainOfficeCountryRegion]   [nvarchar](50) NOT NULL,
-  [MainOfficePostalCode]      [nvarchar](15) NOT NULL,
+  CustomerID                INT             NOT NULL,
+  NameStyle                 BIT             NOT NULL,
+  Title                     NVARCHAR(8)     NULL,
+  FirstName                 NVARCHAR(50)    NOT NULL,
+  MiddleName                NVARCHAR(50)    NULL,
+  LastName                  NVARCHAR(50)    NOT NULL,
+  Suffix                    NVARCHAR(10)    NULL,
+  CompanyName               NVARCHAR(128)   NULL,
+  SalesPerson               NVARCHAR(256)   NULL,
+  EmailAddress              NVARCHAR(50)    NULL,
+  Phone                     NVARCHAR(25)    NULL,
+  MainOfficeAddressLine1    NVARCHAR(60)    NOT NULL,
+  MainOfficeAddressLine2    NVARCHAR(60)    NULL,
+  MainOfficeCity            NVARCHAR(30)    NOT NULL,
+  MainOfficeStateProvince   NVARCHAR(50)    NOT NULL,
+  MainOfficeCountryRegion   NVARCHAR(50)    NOT NULL,
+  MainOfficePostalCode      NVARCHAR(15)    NOT NULL,
   
   -- SCD 2 Metadata Columns
-  [RowEffectiveDate]          [datetime] NOT NULL,
-  [RowExpirationDate]         [datetime] NOT NULL,
-  [RowCurrentFlag]            [bit] NOT NULL,
+  RowEffectiveDate          DATETIME        NOT NULL,
+  RowExpirationDate         DATETIME        NOT NULL,
+  RowCurrentFlag            BIT             NOT NULL,
   
-  CONSTRAINT [PK_DimCustomer] PRIMARY KEY CLUSTERED ([SurrogateKey])
+  CONSTRAINT PK_DimCustomer PRIMARY KEY CLUSTERED (SurrogateKey)
 );
 GO
 
@@ -82,48 +82,48 @@ Description: table that contains the shipped sales orders.
 CREATE TABLE presentation.FactSalesOrders(
 
   -- PK
-  [SalesOrderID]              [int] NOT NULL,
-  [SalesOrderDetailID]        [int] NOT NULL,
+  SalesOrderID              INT               NOT NULL,
+  SalesOrderDetailID        INT               NOT NULL,
 
   -- FKs
-  [CustomerSK]                [int] NOT NULL,
-  [ProductSK]                 [int] NOT NULL,
+  CustomerSK                INT               NOT NULL,
+  ProductSK                 INT               NOT NULL,
 
 	-- SOH Fields
-	[OrderDate]                 [datetime] NOT NULL,
-	[DueDate]                   [datetime] NOT NULL,
-	[ShipDate]                  [datetime] NULL,
-	[CustomerID]                [int] NOT NULL,
-	[Status]                    [tinyint] NOT NULL,
-	[OnlineOrderFlag]           [bit] NOT NULL,
-	[SalesOrderNumber]          [nvarchar](23) NOT NULL,
-	[PurchaseOrderNumber]       [nvarchar](25) NULL,
-	[AccountNumber]             [nvarchar](15) NULL,
-	[ShipMethod]                [nvarchar](50) NOT NULL,
-	[CreditCardApprovalCode]    [varchar](15) NULL,
-	[AllocatedTaxAmt]           [money] NOT NULL,
-	[AllocatedFreight]          [money] NOT NULL,
-	[Comment]                   [nvarchar](max) NULL,
+	OrderDate                 DATETIME          NOT NULL,
+	DueDate                   DATETIME          NOT NULL,
+	ShipDate                  DATETIME          NULL,
+	CustomerID                INT               NOT NULL,
+	Status                    TINYINT           NOT NULL,
+	OnlineOrderFlag           BIT               NOT NULL,
+	SalesOrderNumber          NVARCHAR(23)      NOT NULL,
+	PurchaseOrderNumber       NVARCHAR(25)      NULL,
+	AccountNumber             NVARCHAR(15)      NULL,
+	ShipMethod                NVARCHAR(50)      NOT NULL,
+	CreditCardApprovalCode    varchar(15)       NULL,
+	AllocatedTaxAmt           MONEY             NOT NULL,
+	AllocatedFreight          MONEY             NOT NULL,
+	Comment                   NVARCHAR(max)     NULL,
 
 	-- shipping info
-	[ShippingAddressLine1]      [nvarchar](60) NOT NULL,
-	[ShippingAddressLine2]      [nvarchar](60) NULL,
-	[ShippingCity]              [nvarchar](30) NOT NULL,
-	[ShippingStateProvince]     [nvarchar](50) NOT NULL,
-	[ShippingCountryRegion]     [nvarchar](50) NOT NULL,
-	[ShippingPostalCode]        [nvarchar](15) NOT NULL,
+	ShippingAddressLine1      NVARCHAR(60)      NOT NULL,
+	ShippingAddressLine2      NVARCHAR(60)      NULL,
+	ShippingCity              NVARCHAR(30)      NOT NULL,
+	ShippingStateProvince     NVARCHAR(50)      NOT NULL,
+	ShippingCountryRegion     NVARCHAR(50)      NOT NULL,
+	ShippingPostalCode        NVARCHAR(15)      NOT NULL,
 
 	--SOD Fields
-	[ProductID]                 [int] NOT NULL,
-	[OrderQty]                  [smallint] NOT NULL,
-	[UnitPrice]                 [money] NOT NULL,
-	[UnitPriceDiscount]         [money] NOT NULL, 
-	[LineTotal]     AS isnull([UnitPrice]*(1.0-[UnitPriceDiscount])*[OrderQty], 0.0),
-	[LineTotalDue]  AS isnull(([UnitPrice]*(1.0-[UnitPriceDiscount])*[OrderQty])+[AllocatedTaxAmt]+[AllocatedFreight], 0.0),
+	ProductID                 INT               NOT NULL,
+	OrderQty                  SMALLINT          NOT NULL,
+	UnitPrice                 MONEY             NOT NULL,
+	UnitPriceDiscount         MONEY             NOT NULL, 
+	LineTotal     AS ISNULL(UnitPrice*(1.0-UnitPriceDiscount)*OrderQty, 0.0),
+	LineTotalDue  AS ISNULL(UnitPrice*(1.0-UnitPriceDiscount)*OrderQty + AllocatedTaxAmt + AllocatedFreight, 0.0),
 
-	CONSTRAINT [PK_FactSalesOrders] PRIMARY KEY CLUSTERED ([SalesOrderID], [SalesOrderDetailID]),
-  CONSTRAINT [FK_CustomerSK] FOREIGN KEY (customerSK) REFERENCES presentation.CustomersHistory(SurrogateKey),
-  CONSTRAINT [FK_ProductSK] FOREIGN KEY (productSK) REFERENCES presentation.ProductsHistory(SurrogateKey)
+	CONSTRAINT PK_FactSalesOrders PRIMARY KEY CLUSTERED (SalesOrderID, SalesOrderDetailID),
+  CONSTRAINT FK_CustomerSK      FOREIGN KEY (customerSK)  REFERENCES presentation.CustomersHistory(SurrogateKey),
+  CONSTRAINT FK_ProductSK       FOREIGN KEY (productSK)   REFERENCES presentation.ProductsHistory(SurrogateKey)
 );
 GO
 
@@ -135,83 +135,86 @@ Description: view on top of the CustomersHistory table that implements the custo
 CREATE VIEW presentation.DimCustomer
 AS
   SELECT 
-      [SurrogateKey]
-      ,[CustomerID]
+
+       SurrogateKey
+
+      ,CustomerID
 
       -- SCD 1 columns: keep the most recent value
       ,LAST_VALUE(NameStyle) OVER(
         PARTITION BY CustomerID 
         ORDER BY RowEffectiveDate
         ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-      ) AS [NameStyle]
+      ) AS NameStyle
 
       ,LAST_VALUE(Title) OVER(
         PARTITION BY CustomerID 
         ORDER BY RowEffectiveDate
         ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-      ) AS [Title]
+      ) AS Title
     
       ,LAST_VALUE(FirstName) OVER(
         PARTITION BY CustomerID 
         ORDER BY RowEffectiveDate
         ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-      ) AS [FirstName]
+      ) AS FirstName
 
       ,LAST_VALUE(MiddleName) OVER(
         PARTITION BY CustomerID 
         ORDER BY RowEffectiveDate
         ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-      ) AS [MiddleName]
+      ) AS MiddleName
 
       ,LAST_VALUE(LastName) OVER(
         PARTITION BY CustomerID 
         ORDER BY RowEffectiveDate
         ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-      ) AS [LastName]
+      ) AS LastName
 
       ,LAST_VALUE(Suffix) OVER(
         PARTITION BY CustomerID 
         ORDER BY RowEffectiveDate
         ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-      ) AS [Suffix]
+      ) AS Suffix
 
       ,LAST_VALUE(CompanyName) OVER(
         PARTITION BY CustomerID 
         ORDER BY RowEffectiveDate
         ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-      ) AS [CompanyName]
+      ) AS CompanyName
 
 
       ,LAST_VALUE(EmailAddress) OVER(
         PARTITION BY CustomerID 
         ORDER BY RowEffectiveDate
         ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-      ) AS [EmailAddress]
+      ) AS EmailAddress
 
       ,LAST_VALUE(Phone) OVER(
         PARTITION BY CustomerID 
         ORDER BY RowEffectiveDate
         ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-      ) AS [Phone]
+      ) AS Phone
 
       -- SCD 2 columns: keep the history
-      ,[SalesPerson]
-      ,[MainOfficeAddressLine1]
-      ,[MainOfficeAddressLine2]
-      ,[MainOfficeCity]
-      ,[MainOfficeStateProvince]
-      ,[MainOfficeCountryRegion]
-      ,[MainOfficePostalCode]
+      ,SalesPerson
+      ,MainOfficeAddressLine1
+      ,MainOfficeAddressLine2
+      ,MainOfficeCity
+      ,MainOfficeStateProvince
+      ,MainOfficeCountryRegion
+      ,MainOfficePostalCode
 
       -- SCD 2 metadata columns
-      ,[RowEffectiveDate]
-      ,[RowExpirationDate]
-      ,[RowCurrentFlag]
+      ,RowEffectiveDate
+      ,RowExpirationDate
+      ,RowCurrentFlag
       ,CONVERT(
           BIT, 
           IIF((MAX(RowExpirationDate) OVER(PARTITION BY CustomerID)) = convert(DATETIME, '9999-12-31'), 0, 1)
-      ) AS [RowDeletedFlag]
-  FROM [presentation].[CustomersHistory];
+      ) AS RowDeletedFlag
+    
+  FROM presentation.CustomersHistory;
 GO
 
 /*
@@ -222,72 +225,75 @@ Description: view on top of the ProductsHistory table that implements the produc
 CREATE VIEW presentation.DimProduct
 AS
   SELECT 
-      [SurrogateKey]
-      ,[ProductID]
+
+      SurrogateKey
+
+      ,ProductID
 
       -- SCD 0 columns: keep the original value
       ,FIRST_VALUE(SellStartDate) OVER(
         PARTITION BY ProductID 
         ORDER BY RowEffectiveDate
         ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-        ) AS [SellStartDate]
+        ) AS SellStartDate
 
       -- SCD 2 columns_ show history of changes
-      ,[Name]
-      ,[ProductNumber]
-      ,[Color]
-      ,[StandardCost]
-      ,[ListPrice]
-      ,[Size]
-      ,[Weight]
+      ,Name
+      ,ProductNumber
+      ,Color
+      ,StandardCost
+      ,ListPrice
+      ,Size
+      ,Weight
 
       -- SCD 1 columns: keep most current value
       ,LAST_VALUE(SellEndDate) OVER(
         PARTITION BY ProductID 
         ORDER BY RowEffectiveDate
         ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-      ) AS [SellEndDate]
+      ) AS SellEndDate
 
       ,LAST_VALUE(DiscontinuedDate) OVER(
         PARTITION BY ProductID 
         ORDER BY RowEffectiveDate
         ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-      ) AS [DiscontinuedDate]
+      ) AS DiscontinuedDate
 
       ,LAST_VALUE(ProductModel) OVER(
         PARTITION BY ProductID 
         ORDER BY RowEffectiveDate
         ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-      ) AS [ProductModel]
+      ) AS ProductModel
 
       ,LAST_VALUE(ProductModelDescription) OVER(
         PARTITION BY ProductID 
         ORDER BY RowEffectiveDate
         ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-      ) AS [ProductModelDescription]
+      ) AS ProductModelDescription
 
       ,LAST_VALUE(ProductSubcategory) OVER(
         PARTITION BY ProductID 
         ORDER BY RowEffectiveDate
         ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-      ) AS [ProductSubcategory]
+      ) AS ProductSubcategory
 
       ,LAST_VALUE(ProductCategory) OVER(
         PARTITION BY ProductID 
         ORDER BY RowEffectiveDate
         ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-      ) AS [ProductCategory]
+      ) AS ProductCategory
 
       -- SCD 2 metadata columns
-      ,[RowEffectiveDate]
-      ,[RowExpirationDate]
-      ,[RowCurrentFlag]
+      ,RowEffectiveDate
+      ,RowExpirationDate
+      ,RowCurrentFlag
       ,CONVERT(
           BIT, 
           IIF((MAX(RowExpirationDate) OVER(PARTITION BY ProductID)) = convert(DATETIME, '9999-12-31'), 0, 1)
-       ) AS [RowDeletedFlag]
-  FROM [presentation].[ProductsHistory];
+       ) AS RowDeletedFlag
+       
+  FROM presentation.ProductsHistory;
 GO
 
-print 'PRESENTATION SCHEMA CREATED SUCCESSFULLY';
+prINT 'PRESENTATION SCHEMA CREATED SUCCESSFULLY';
 GO

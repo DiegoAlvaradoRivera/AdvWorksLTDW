@@ -3,10 +3,10 @@ CREATE SCHEMA presentation;
 GO
 
 /*
-Name: 	     ProductsHistory
+Name: 	     ProductHistory
 Description: table that contains the history of changes of the product entities.
 */
-CREATE TABLE presentation.ProductsHistory(
+CREATE TABLE presentation.ProductHistory(
 
   -- PK
   SurrogateKey              INT IDENTITY(1, 1) NOT NULL,
@@ -39,10 +39,10 @@ GO
 
 
 /*
-Name: 	     CustomersHistory
+Name: 	     CustomerHistory
 Description: table that contains the history of changes of the customer entities.
 */
-CREATE TABLE presentation.CustomersHistory(
+CREATE TABLE presentation.CustomerHistory(
   
   -- PK
   SurrogateKey              INT IDENTITY(1, 1) NOT NULL,
@@ -82,10 +82,10 @@ Description: table that contains the shipped sales orders.
 CREATE TABLE presentation.FactSalesOrders(
 
   -- PK
-  SalesOrderID              INT               NOT NULL,
   SalesOrderDetailID        INT               NOT NULL,
 
   -- FKs
+  SalesOrderID              INT               NOT NULL,
   CustomerSK                INT               NOT NULL,
   ProductSK                 INT               NOT NULL,
 
@@ -121,15 +121,15 @@ CREATE TABLE presentation.FactSalesOrders(
 	LineTotal     AS ISNULL(UnitPrice*(1.0-UnitPriceDiscount)*OrderQty, 0.0),
 	LineTotalDue  AS ISNULL(UnitPrice*(1.0-UnitPriceDiscount)*OrderQty + AllocatedTaxAmt + AllocatedFreight, 0.0),
 
-	CONSTRAINT PK_FactSalesOrders PRIMARY KEY CLUSTERED (SalesOrderID, SalesOrderDetailID),
-  CONSTRAINT FK_CustomerSK      FOREIGN KEY (customerSK)  REFERENCES presentation.CustomersHistory(SurrogateKey),
-  CONSTRAINT FK_ProductSK       FOREIGN KEY (productSK)   REFERENCES presentation.ProductsHistory(SurrogateKey)
+	CONSTRAINT PK_FactSalesOrders PRIMARY KEY CLUSTERED (SalesOrderDetailID),
+  CONSTRAINT FK_CustomerSK      FOREIGN KEY (customerSK)  REFERENCES presentation.CustomerHistory(SurrogateKey),
+  CONSTRAINT FK_ProductSK       FOREIGN KEY (productSK)   REFERENCES presentation.ProductHistory(SurrogateKey)
 );
 GO
 
 /*
 Name: 	     DimCustomer
-Description: view on top of the CustomersHistory table that implements the customer dimension. 
+Description: view on top of the CustomerHistory table that implements the customer dimension. 
     It applies the appropiate SCD semantic for each column.
 */
 CREATE VIEW presentation.DimCustomer
@@ -214,12 +214,12 @@ AS
           IIF((MAX(RowExpirationDate) OVER(PARTITION BY CustomerID)) = convert(DATETIME, '9999-12-31'), 0, 1)
       ) AS RowDeletedFlag
     
-  FROM presentation.CustomersHistory;
+  FROM presentation.CustomerHistory;
 GO
 
 /*
 Name: 	     DimProduct
-Description: view on top of the ProductsHistory table that implements the product dimension. 
+Description: view on top of the ProductHistory table that implements the product dimension. 
     It applies the appropiate SCD semantic for each column.
 */
 CREATE VIEW presentation.DimProduct
@@ -292,7 +292,7 @@ AS
           IIF((MAX(RowExpirationDate) OVER(PARTITION BY ProductID)) = convert(DATETIME, '9999-12-31'), 0, 1)
        ) AS RowDeletedFlag
        
-  FROM presentation.ProductsHistory;
+  FROM presentation.ProductHistory;
 GO
 
 prINT 'PRESENTATION SCHEMA CREATED SUCCESSFULLY';

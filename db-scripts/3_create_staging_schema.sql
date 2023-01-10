@@ -10,11 +10,11 @@ Name: 	     JobLogs
 Description: table in which the job runs are logged
 */
 create table staging.JobLogs(
-	pipeline_name 		varchar(50)	NOT NULL,
-	pipeline_run_id     varchar(100) NOT NULL,
-	sync_ct_version 	int			NULL,
+	pipeline_name 		varchar(50)	    NOT NULL,
+	pipeline_run_id     varchar(100)    NOT NULL,
+	sync_ct_version 	int			    NULL,
 	sync_timestamp      datetime		NOT NULL
-	primary key (pipeline_name, pipeline_run_id)
+	constraint PK_JobLogs primary key (pipeline_name, pipeline_run_id)
 );
 go
 
@@ -164,16 +164,14 @@ Description: staging table for SOD records
 create table staging.SalesOrderDetailStaging(
 
 	[SalesOrderDetailID]        [int] NOT NULL,
-
     [SalesOrderID]              [int] NOT NULL,
 	[ProductID]                 [int] NOT NULL,
-
 	[OrderQty]                  [smallint] NOT NULL,
 	[UnitPrice]                 [money] NOT NULL,
 	[UnitPriceDiscount]         [money] NOT NULL,
 	[LineTotal]                 [numeric](38, 6) NOT NULL,
 
-    CONSTRAINT UniqueHeaderLineCombinations UNIQUE(SalesOrderID, SalesOrderDetailID)
+    CONSTRAINT UniqueHeaderLineCombinations UNIQUE(SalesOrderDetailID)
 
 );
 go
@@ -181,7 +179,7 @@ go
 /*
 Name: 	     SP_CustomerHistoryIncrementalLoad
 Description: SP that loads the records in the CustomerCTChangesStaging table into 
-    the CustomersHistory table. For inserted customers, a new row is created. 
+    the CustomerHistory table. For inserted customers, a new row is created. 
     For modified customers, the current row is expired and a new one is created. 
     For customers that have been deleted, the current row is expired.
 */
@@ -198,14 +196,14 @@ begin
     CH.RowExpirationDate = CT.ct_last_mod_time,
     CH.RowCurrentFlag = 0
     from 
-    presentation.CustomersHistory as CH
+    presentation.CustomerHistory as CH
     inner join 
     staging.CustomerCTChangesStaging as CT
     on CH.CustomerID = CT.CustomerID and CH.RowCurrentFlag = 1 and CT.ct_operation in ('U', 'D');
 
     -- for entities that have been inserted or updated
     -- insert a new row with the current data
-    insert into presentation.CustomersHistory(
+    insert into presentation.CustomerHistory(
     CustomerID, NameStyle, Title, FirstName, MiddleName, LastName, Suffix, CompanyName, SalesPerson, EmailAddress, Phone, 
     MainOfficeAddressLine1, MainOfficeAddressLine2, MainOfficeCity, MainOfficeStateProvince, MainOfficeCountryRegion, MainOfficePostalCode,
     RowEffectiveDate, RowExpirationDate, RowCurrentFlag
@@ -243,7 +241,7 @@ go
 /*
 Name: 	     SP_ProductHistoryIncrementalLoad
 Description: SP that loads the records in the ProductCTChangesStaging table into 
-    the ProductsHistory table. For inserted products, a new row is created. 
+    the ProductHistory table. For inserted products, a new row is created. 
     For modified products, the current row is expired and a new one is created. 
     For products that have been deleted, the current row is expired.
 */
@@ -260,14 +258,14 @@ begin
     HT.RowExpirationDate = CT.ct_last_mod_time,
     HT.RowCurrentFlag = 0
     from 
-    presentation.ProductsHistory as HT
+    presentation.ProductHistory as HT
     inner join 
     staging.ProductCTChangesStaging as CT
     on HT.ProductID = CT.ProductID and HT.RowCurrentFlag = 1 and CT.ct_operation in ('U', 'D');
 
     -- for entities that have been inserted or updated
     -- insert a new row with the current data
-    insert into presentation.ProductsHistory(
+    insert into presentation.ProductHistory(
     ProductID, Name, ProductNumber, Color, StandardCost, ListPrice, Size, Weight, SellStartDate, SellEndDate, 
     DiscontinuedDate, ProductModel, ProductModelDescription, ProductSubcategory, ProductCategory,
     RowEffectiveDate, RowExpirationDate, RowCurrentFlag
@@ -303,13 +301,13 @@ end;
 go
 
 /*
-Name: 	     SP_ProductHistoryIncrementalLoad
+Name: 	     SP_FactSalesOrdersIncrementalLoad
 Description: SP that loads the records in the SalesOrderHeaderStaging and 
     SalesOrderDetailStaging tables into the FactSalesOrders table. 
 
     It applies the following transformations:
     - add a surrogate key to the CustomesrHistory table based on the OrderDate.
-    - add a surrogate key to the ProductsHistory table based on the OrderDate.
+    - add a surrogate key to the ProductHistory table based on the OrderDate.
     - allocates the header-level SOH.TaxAmt column to the line level by 
         distributing it proportionally to the LineTotal.
     - allocates the header-level SOH.Freight column to the line level by 
@@ -325,9 +323,9 @@ begin
     insert into presentation.FactSalesOrders
     select 
 
-        SOH.SalesOrderID as SalesOrderID, 
         SOD.SalesOrderDetailID as SalesOrderDetailID,
 
+        SOH.SalesOrderID as SalesOrderID, 
         staging.getCustomerSK(CustomerID, OrderDate) as CustomerSK,
         staging.getProductSK(ProductID, OrderDate) as ProductSK,
 
@@ -352,7 +350,7 @@ begin
     on SOH.SalesOrderID = SOD.SalesOrderID;
 
     -- log the job
-    declare @extraction_time as datetime =  SYSDATETIMEOFFSET() at time zone N'Eastern Standard Time';
+    declare @extraction_time as datetime = SYSDATETIMEOFFSET() at time zone N'Eastern Standard Time';
     
     exec staging.SP_LogJobRun 
         @pipeline_name = 'sales_orders_sync', 
@@ -381,7 +379,7 @@ as
 begin 
     declare @result int;
     select @result = SurrogateKey
-    from presentation.CustomersHistory 
+    from presentation.CustomerHistory 
     where CustomerID = @customer_id and 
         @timetamp between RowEffectiveDate and RowExpirationDate
     return @result;
@@ -402,7 +400,7 @@ as
 begin 
     declare @result int;
     select @result = SurrogateKey
-    from presentation.ProductsHistory 
+    from presentation.ProductHistory 
     where ProductID = @product_id and 
         @timetamp between RowEffectiveDate and RowExpirationDate
     return @result;

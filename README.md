@@ -17,7 +17,6 @@ and sales orders. The following image shows the schema of the database.
 ## Dimensional Model for the Sales Order Business Process
 
 Sales orders are placed by customers, and each order is associated with multiple products. 
-
 The sales order business process goes through the following states: 
 
 - 1 = In process
@@ -172,7 +171,7 @@ To extract data changes of the customer dimension entities, CT is activated on t
 Customer inserts and deletes are identified by looking for inserts and deletes in the Customer table. 
 Customer updates are identified by extracting all changes in the Customer, Address and CustomerAddress tables 
 and associating the changes with its respective customer.
-The process for extracting the customer CT updates can be found in the integration.CustomerCTUpdates function.
+The process for extracting the customer CT updates can be found in the Integration.CustomerCTUpdates function.
 
 The CustomerIncrLoad pipeline has the following activities:
 
@@ -197,7 +196,7 @@ if the CT file is empty.
 To extract data changes of the product dimension entities, CT is activated on the Product, ProductCategory, ProductModel, ProductDescription and ProductModelProductDescription tables. 
 Product inserts and deletes are identified by looking for inserts and deletes in the Product table. 
 Product updates are identified by extracting all changes in the Product, ProductCategory, ProductModel, ProductDescription and ProductModelProductDescription tables and associating them to its respective product.
-The process for constructing the product CT updates can be found in the integration.ProductCTUpdates function.
+The process for constructing the product CT updates can be found in the Integration.ProductCTUpdates function.
 
 The ProductIncrLoad pipeline has the following activities:
 
@@ -235,11 +234,10 @@ operational DB but not in the DW.
   - **FALSE**:
     - **Load SOH File**: loads SOH file into the Staging.SalesOrderHeaderStaging table.
     - **Load SOD File**: loads SOD file into the Staging.SalesOrderDetailStaging table.
-    - **Call SP_ProductHistoryIncrementalLoad**: updates the Presentation.FactSalesOrders table using the 
+    - **Call SP_FactSalesOrdersIncrementalLoad**: updates the Presentation.FactSalesOrders table using the 
     contents of the Staging.SalesOrderHeaderStaging and Staging.SalesOrderDetailStaging tables, and 
     logs the job execution.
-
-
+- **Truncate SOs To Extract Table**: truncates the Integration.SalesOrdersToExtract table.
 
 ![](img/SalesOrdersIncrLoadPipeline.png "Sales orders incremental load")
 

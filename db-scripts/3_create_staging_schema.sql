@@ -10,10 +10,10 @@ Name: 	     JobLogs
 Description: table in which the job runs are logged
 */
 create table staging.JobLogs(
-	pipeline_name 		varchar(50)	    NOT NULL,
-	pipeline_run_id     varchar(100)    NOT NULL,
-	sync_ct_version 	int			    NULL,
-	sync_timestamp      datetime		NOT NULL
+	pipeline_name 		varchar(50)	    not null,
+	pipeline_run_id     varchar(100)    not null,
+	sync_ct_version 	int			    null,
+	sync_timestamp      datetime		not null
 	constraint PK_JobLogs primary key (pipeline_name, pipeline_run_id)
 );
 go
@@ -65,30 +65,30 @@ Description: staging table for the customer CT changes
 */
 create table staging.CustomerCTChangesStaging(
 
-	ct_current_version          int NOT NULL,
-	extraction_time             datetime not null,
-	ct_key                      int not null, 
-	ct_operation                char(1) not null, 
-	ct_insertion_time           datetime null,
-	ct_last_mod_time            datetime null,
+	ct_current_version          int             not null,
+	extraction_time             datetime        not null,
+	ct_key                      int             not null, 
+	ct_operation                char(1)         not null, 
+	ct_insertion_time           datetime        null,
+	ct_last_mod_time            datetime        null,
 
-	[CustomerID]                [int] UNIQUE NOT NULL,
-	[NameStyle]                 [bit] NOT NULL,
-	[Title]                     [nvarchar](8) NULL,
-	[FirstName]                 [nvarchar](50) NOT NULL,
-	[MiddleName]                [nvarchar](50) NULL,
-	[LastName]                  [nvarchar](50) NOT NULL,
-	[Suffix]                    [nvarchar](10) NULL,
-	[CompanyName]               [nvarchar](128) NULL,
-	[SalesPerson]               [nvarchar](256) NULL,
-	[EmailAddress]              [nvarchar](50) NULL,
-	[Phone]                     [nvarchar](25) NULL,
-	[MainOfficeAddressLine1]    [nvarchar](60) NOT NULL,
-	[MainOfficeAddressLine2]    [nvarchar](60) NULL,
-	[MainOfficeCity]            [nvarchar](30) NOT NULL,
-	[MainOfficeStateProvince]   [nvarchar](50) NOT NULL,
-	[MainOfficeCountryRegion]   [nvarchar](50) NOT NULL,
-	[MainOfficePostalCode]      [nvarchar](15) NOT NULL
+	CustomerID                  int unique      not null,
+	NameStyle                   bit             not null,
+	Title                       nvarchar(8)     null,
+	FirstName                   nvarchar(50)    not null,
+	MiddleName                  nvarchar(50)    null,
+	LastName                    nvarchar(50)    not null,
+	Suffix                      nvarchar(10)    null,
+	CompanyName                 nvarchar(128)   null,
+	SalesPerson                 nvarchar(256)   null,
+	EmailAddress                nvarchar(50)    null,
+	Phone                       nvarchar(25)    null,
+	MainOfficeAddressLine1      nvarchar(60)    not null,
+	MainOfficeAddressLine2      nvarchar(60)    null,
+	MainOfficeCity              nvarchar(30)    not null,
+	MainOfficeStateProvince     nvarchar(50)    not null,
+	MainOfficeCountryRegion     nvarchar(50)    not null,
+	MainOfficePostalCode        nvarchar(15)    not null
 );
 go
 
@@ -98,28 +98,28 @@ Description: staging table for the product CT changes
 */
 create table staging.ProductCTChangesStaging(
 
-	ct_current_version          int NOT NULL,
-	extraction_time             datetime not null,
-	ct_key                      int not null, 
-	ct_operation                char(1) not null, 
-	ct_insertion_time           datetime null,
-	ct_last_mod_time            datetime null,
+	ct_current_version          int             not null,
+	extraction_time             datetime        not null,
+	ct_key                      int             not null, 
+	ct_operation                char(1)         not null, 
+	ct_insertion_time           datetime        null,
+	ct_last_mod_time            datetime        null,
 
-	[ProductID]                 [int] UNIQUE NOT NULL,
-	[Name]                      [nvarchar](50) NOT NULL,
-	[ProductNumber]             [nvarchar](25) NOT NULL,
-	[Color]                     [nvarchar](15) NULL,
-	[StandardCost]              [money] NOT NULL,
-	[ListPrice]                 [money] NOT NULL,
-	[Size]                      [nvarchar](5) NULL,
-	[Weight]                    [decimal](8, 2) NULL,
-	[SellStartDate]             [datetime] NOT NULL,
-	[SellEndDate]               [datetime] NULL,
-	[DiscontinuedDate]          [datetime] NULL,
-	[ProductModel]              [nvarchar](50) NOT NULL,
-	[ProductModelDescription]   [nvarchar](400) NOT NULL,
-	[ProductSubcategory]        [nvarchar](50) NOT NULL,
-	[ProductCategory]           [nvarchar](50) NOT NULL,
+	ProductID                   int unique      not null,
+	Name                        nvarchar(50)    not null,
+	ProductNumber               nvarchar(25)    not null,
+	Color                       nvarchar(15)    null,
+	StandardCost                money           not null,
+	ListPrice                   money           not null,
+	Size                        nvarchar(5)     null,
+	Weight                      decimal(8, 2)   null,
+	SellStartDate               datetime        not null,
+	SellEndDate                 datetime        null,
+	DiscontinuedDate            datetime        null,
+	ProductModel                nvarchar(50)    not null,
+	ProductModelDescription     nvarchar(400)   not null,
+	ProductSubcategory          nvarchar(50)    not null,
+	ProductCategory             nvarchar(50)    not null,
 );
 go
 
@@ -129,31 +129,31 @@ Description: staging table for SOH records
 */
 create table staging.SalesOrderHeaderStaging(
 
-	[SalesOrderID]              [int] UNIQUE NOT NULL,
-    [CustomerID]                [int] NOT NULL,
-	[OrderDate]                 [datetime] NOT NULL,
-	[DueDate]                   [datetime] NOT NULL,
-	[ShipDate]                  [datetime] NULL,
+	SalesOrderID              int unique    not null,
+    CustomerID                int           not null,
+	OrderDate                 datetime      not null,
+	DueDate                   datetime      not null,
+	ShipDate                  datetime      null,
 	
-    [Status]                    [tinyint] NOT NULL,
-	[OnlineOrderFlag]           [bit] NOT NULL,
-	[SalesOrderNumber]          [nvarchar](23) NOT NULL,
-	[PurchaseOrderNumber]       [nvarchar](25) NULL,
-	[AccountNumber]             [nvarchar](15) NULL,
-	[ShipMethod]                [nvarchar](50) NOT NULL,
-	[CreditCardApprovalCode]    [varchar](15) NULL,
-	[TaxAmt]                    [money] NOT NULL,
-	[Freight]                   [money] NOT NULL,
-    [Subtotal]                  [money] NOT NULL,
-	[Comment]                   [nvarchar](max) NULL,
+    Status                    tinyint       not null,
+	OnlineOrderFlag           bit           not null,
+	SalesOrderNumber          nvarchar(23)  not null,
+	PurchaseOrderNumber       nvarchar(25)  null,
+	AccountNumber             nvarchar(15)  null,
+	ShipMethod                nvarchar(50)  not null,
+	CreditCardApprovalCode    varchar(15)   null,
+	TaxAmt                    money         not null,
+	Freight                   money         not null,
+    Subtotal                  money         not null,
+	Comment                   nvarchar(max) null,
 
 	-- shipping info
-	[ShippingAddressLine1]      [nvarchar](60) NOT NULL,
-	[ShippingAddressLine2]      [nvarchar](60) NULL,
-	[ShippingCity]              [nvarchar](30) NOT NULL,
-	[ShippingStateProvince]     [nvarchar](50) NOT NULL,
-	[ShippingCountryRegion]     [nvarchar](50) NOT NULL,
-	[ShippingPostalCode]        [nvarchar](15) NOT NULL,
+	ShippingAddressLine1      nvarchar(60) not null,
+	ShippingAddressLine2      nvarchar(60) null,
+	ShippingCity              nvarchar(30) not null,
+	ShippingStateProvince     nvarchar(50) not null,
+	ShippingCountryRegion     nvarchar(50) not null,
+	ShippingPostalCode        nvarchar(15) not null,
 );
 go
 
@@ -163,15 +163,13 @@ Description: staging table for SOD records
 */
 create table staging.SalesOrderDetailStaging(
 
-	[SalesOrderDetailID]        [int] NOT NULL,
-    [SalesOrderID]              [int] NOT NULL,
-	[ProductID]                 [int] NOT NULL,
-	[OrderQty]                  [smallint] NOT NULL,
-	[UnitPrice]                 [money] NOT NULL,
-	[UnitPriceDiscount]         [money] NOT NULL,
-	[LineTotal]                 [numeric](38, 6) NOT NULL,
-
-    CONSTRAINT UniqueHeaderLineCombinations UNIQUE(SalesOrderDetailID)
+	SalesOrderDetailID        int unique        not null,
+    SalesOrderID              int               not null,
+	ProductID                 int               not null,
+	OrderQty                  smallint          not null,
+	UnitPrice                 money             not null,
+	UnitPriceDiscount         money             not null,
+	LineTotal                 numeric(38, 6)    not null,
 
 );
 go
@@ -355,7 +353,7 @@ begin
     exec staging.SP_LogJobRun 
         @pipeline_name = 'sales_orders_sync', 
         @pipeline_run_id = @pipeline_run_id,
-        @sync_ct_version = NULL,
+        @sync_ct_version = null,
         @sync_timestamp = @extraction_time;
 
     -- truncate the staging tables
